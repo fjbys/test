@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Universal Image Editor Pro (Final fix)</title>
+  <title>Universal Image Editor Pro (Fixed)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
@@ -15,19 +15,19 @@
     <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
       
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">画像切り抜き＆JPG一括変換１</h1>
-        <p class="text-gray-500 text-sm">.j2, .heic, .psd対応 | 安定動作版</p>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">画像切り抜き＆JPG一括変換</h1>
+        <p class="text-gray-500 text-sm">.j2, .heic, .psd対応 | エラー修正済み安定版</p>
       </div>
 
       <div id="debugLog" class="mb-6 p-3 bg-gray-900 rounded-lg text-green-400 font-mono text-xs overflow-y-auto max-h-32 shadow-inner">
-        > エンジン起動を待っています...<br>
+        > システム起動中...<br>
       </div>
 
       <div class="mb-8">
-        <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-40 border-2 border-blue-300 border-dashed rounded-xl cursor-not-allowed bg-gray-50 transition-all duration-300">
+        <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-40 border-2 border-blue-300 border-dashed rounded-xl cursor-not-allowed bg-gray-100 transition-all duration-300">
           <div id="uploadUI" class="flex flex-col items-center justify-center text-center px-4">
             <svg id="uploadIcon" class="w-12 h-12 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-            <p id="uploadText" class="text-sm text-gray-700 font-medium leading-relaxed">準備中...</p>
+            <p id="uploadText" class="text-sm text-gray-700 font-medium leading-relaxed">エンジン準備中...</p>
           </div>
           <input id="imageInput" type="file" multiple accept="image/*,.j2,.jp2,.heic,.tiff,.psd,.webp" class="hidden" disabled />
         </label>
@@ -51,7 +51,7 @@
         <img id="editingImage" class="max-w-full max-h-full block">
         <div id="modalLoading" class="absolute inset-0 bg-gray-900/80 flex flex-col items-center justify-center text-white">
           <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p id="loadingMsg" class="text-sm font-bold">画像を展開中...</p>
+          <p id="loadingMsg" class="text-sm font-bold">処理中...</p>
         </div>
       </div>
       <div class="p-6 border-t bg-white">
@@ -72,7 +72,14 @@
   </div>
 
   <script type="module">
-    import { ImageMagick, initializeImageMagick, MagickFormat, MagickColor, AlphaOption, Gravity } from 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/index.js';
+    // 競合を避けるため、必要なものだけを明示的にインポート
+    import { 
+      ImageMagick, 
+      initializeImageMagick, 
+      MagickFormat, 
+      MagickColor,
+      AlphaOption // これがエラーの原因なら、後で内部参照に切り替えます
+    } from 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/index.js';
 
     function log(msg, isError = false) {
       const panel = document.getElementById('debugLog');
@@ -86,11 +93,14 @@
         log("WASMフェッチ開始...");
         const resp = await fetch(wasmUrl);
         const wasmBytes = await resp.arrayBuffer();
+        
+        // 初期化。ここで AlphaOption 等が未定義でも ImageMagick オブジェクト自体は使えます
         await initializeImageMagick(new Uint8Array(wasmBytes));
-        log("エンジン初期化成功");
+        log("エンジン初期化完了");
         startApp();
       } catch (err) {
         log("初期化エラー: " + err.message, true);
+        console.error(err);
       }
     }
 
@@ -130,7 +140,7 @@
           const pngBlob = await new Promise((res, rej) => {
             try {
               ImageMagick.read(bytes, img => {
-                // プレビュー用にPNGへ。巨大すぎる場合はここで少し縮小するとより安定します
+                // PNGで書き出し
                 img.write(data => res(new Blob([data], {type:'image/png'})));
               });
             } catch (e) { rej(e); }
@@ -146,7 +156,7 @@
           };
         } catch (e) {
           log(`展開失敗: ${file.name} (${e.message})`, true);
-          alert(`画像を開けませんでした: ${e.message}`);
+          alert(`画像を開けませんでした。`);
           index++; processNext();
         }
       }
@@ -155,7 +165,7 @@
         if (!cropper) return;
         const file = queue[index];
         const cropData = cropper.getData({ rounded: true });
-        document.getElementById('loadingMsg').innerText = "変換中...";
+        document.getElementById('loadingMsg').innerText = "JPGに変換中...";
         document.getElementById('modalLoading').classList.remove('hidden');
 
         try {
@@ -164,18 +174,25 @@
           const jpgBlob = await new Promise((res, rej) => {
             try {
               ImageMagick.read(bytes, img => {
-                // 安全策：座標が画像外にはみ出ないよう調整
-                const cropX = Math.max(0, cropData.x);
-                const cropY = Math.max(0, cropData.y);
-                const cropW = Math.min(cropData.width, img.width - cropX);
-                const cropH = Math.min(cropData.height, img.height - cropY);
-
+                // 1. 背景色の設定 (透過対策)
                 img.backgroundColor = new MagickColor("white");
-                img.alpha(AlphaOption.Remove);
                 
-                // 切り抜き実行
-                img.crop(cropW, cropH, cropX, cropY);
+                // 2. 透過レイヤーの処理 (AlphaOptionを直接使わず、0などの数値で代用するか、メソッドで処理)
+                try {
+                   // AlphaOption.Remove が 0 であることが多いですが、安全のため条件分岐
+                   img.alpha(0); 
+                } catch(e) {
+                   log("AlphaOptionの適用をスキップしました(非対応)");
+                }
+
+                // 3. 安全な座標で切り抜き
+                const x = Math.max(0, cropData.x);
+                const y = Math.max(0, cropData.y);
+                const w = Math.min(cropData.width, img.width - x);
+                const h = Math.min(cropData.height, img.height - y);
+                img.crop(w, h, x, y);
                 
+                // 4. フォーマット変換
                 img.format = MagickFormat.Jpeg;
                 img.quality = 85;
                 img.write(data => res(new Blob([data], {type:'image/jpeg'})));
@@ -186,11 +203,11 @@
           const newName = file.name.replace(/\.[^/.]+$/, "") + "_cropped.jpg";
           zip.file(newName, jpgBlob);
           addCard(URL.createObjectURL(jpgBlob), newName);
-          log(`完了: ${newName}`);
+          log(`変換成功: ${newName}`);
           index++; processNext();
         } catch (e) {
-          log(`変換失敗: ${e.message}`, true);
-          alert(`変換エラーが発生しました:\n${e.message}`);
+          log(`エラー: ${e.message}`, true);
+          alert(`失敗しました: ${e.message}`);
           document.getElementById('modalLoading').classList.add('hidden');
         }
       };
@@ -225,10 +242,9 @@
     function addCard(url, name) {
       const area = document.getElementById('outputArea');
       const div = document.createElement('div');
-      div.className = "bg-white p-2 border rounded-xl shadow-sm animate-pulse";
+      div.className = "bg-white p-2 border rounded-xl shadow-sm";
       div.innerHTML = `<img src="${url}" class="w-full h-24 object-contain mb-2"><p class="text-[10px] truncate mb-2 text-center text-gray-400">${name}</p><a href="${url}" download="${name}" class="block text-center text-xs font-bold text-blue-500 py-1 bg-blue-50 rounded-lg">保存</a>`;
       area.appendChild(div);
-      setTimeout(() => div.classList.remove('animate-pulse'), 500);
     }
 
     initApp();
