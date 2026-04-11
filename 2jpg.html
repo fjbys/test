@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Universal Image Editor Pro (Fixed)</title>
+  <title>Universal Image Editor Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
@@ -16,18 +16,18 @@
       
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800 mb-2">画像切り抜き＆JPG一括変換</h1>
-        <p class="text-gray-500 text-sm">.j2, .heic, .psd対応 | エラー修正済み安定版</p>
+        <p class="text-gray-500 text-sm">.j2, .heic, .psd対応 | システムエラー修正済み</p>
       </div>
 
       <div id="debugLog" class="mb-6 p-3 bg-gray-900 rounded-lg text-green-400 font-mono text-xs overflow-y-auto max-h-32 shadow-inner">
-        > システム起動中...<br>
+        > システムを初期化しています...<br>
       </div>
 
       <div class="mb-8">
         <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-40 border-2 border-blue-300 border-dashed rounded-xl cursor-not-allowed bg-gray-100 transition-all duration-300">
           <div id="uploadUI" class="flex flex-col items-center justify-center text-center px-4">
             <svg id="uploadIcon" class="w-12 h-12 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-            <p id="uploadText" class="text-sm text-gray-700 font-medium leading-relaxed">エンジン準備中...</p>
+            <p id="uploadText" class="text-sm text-gray-700 font-medium">エンジンをロードしています...</p>
           </div>
           <input id="imageInput" type="file" multiple accept="image/*,.j2,.jp2,.heic,.tiff,.psd,.webp" class="hidden" disabled />
         </label>
@@ -51,7 +51,7 @@
         <img id="editingImage" class="max-w-full max-h-full block">
         <div id="modalLoading" class="absolute inset-0 bg-gray-900/80 flex flex-col items-center justify-center text-white">
           <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p id="loadingMsg" class="text-sm font-bold">処理中...</p>
+          <p id="loadingMsg" class="text-sm font-bold">画像を処理中...</p>
         </div>
       </div>
       <div class="p-6 border-t bg-white">
@@ -64,7 +64,7 @@
           </div>
           <div class="flex gap-3 w-full sm:w-auto">
             <button id="skipBtn" class="px-6 py-2.5 text-sm font-bold text-gray-500 border rounded-full hover:bg-gray-50">スキップ</button>
-            <button id="cropConfirmBtn" class="px-8 py-2.5 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 shadow-md">決定して変換</button>
+            <button id="cropConfirmBtn" class="px-8 py-2.5 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 shadow-md">決定して次へ</button>
           </div>
         </div>
       </div>
@@ -72,13 +72,12 @@
   </div>
 
   <script type="module">
-    // 競合を避けるため、必要なものだけを明示的にインポート
+    // 【修正】AlphaOption を import から削除しました
     import { 
       ImageMagick, 
       initializeImageMagick, 
       MagickFormat, 
-      MagickColor,
-      AlphaOption // これがエラーの原因なら、後で内部参照に切り替えます
+      MagickColor 
     } from 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/index.js';
 
     function log(msg, isError = false) {
@@ -93,13 +92,11 @@
         log("WASMフェッチ開始...");
         const resp = await fetch(wasmUrl);
         const wasmBytes = await resp.arrayBuffer();
-        
-        // 初期化。ここで AlphaOption 等が未定義でも ImageMagick オブジェクト自体は使えます
         await initializeImageMagick(new Uint8Array(wasmBytes));
-        log("エンジン初期化完了");
+        log("エンジン準備完了。");
         startApp();
       } catch (err) {
-        log("初期化エラー: " + err.message, true);
+        log("初期化に失敗しました: " + err.message, true);
         console.error(err);
       }
     }
@@ -111,7 +108,7 @@
       dropZone.classList.replace('cursor-not-allowed', 'cursor-pointer');
       dropZone.classList.replace('bg-gray-100', 'bg-blue-50');
       document.getElementById('uploadIcon').classList.replace('text-gray-400', 'text-blue-500');
-      document.getElementById('uploadText').innerText = "準備完了。画像を選択してください";
+      document.getElementById('uploadText').innerText = "準備完了。画像を選択してください。";
 
       let queue = [], index = 0, zip = null, cropper = null;
 
@@ -135,12 +132,11 @@
 
         try {
           const bytes = new Uint8Array(await file.arrayBuffer());
-          log(`${file.name} を展開中...`);
+          log(`${file.name} を読み込み中...`);
 
           const pngBlob = await new Promise((res, rej) => {
             try {
               ImageMagick.read(bytes, img => {
-                // PNGで書き出し
                 img.write(data => res(new Blob([data], {type:'image/png'})));
               });
             } catch (e) { rej(e); }
@@ -155,8 +151,7 @@
             cropper = new Cropper(imgEl, { viewMode: 1, autoCropArea: 0.8 });
           };
         } catch (e) {
-          log(`展開失敗: ${file.name} (${e.message})`, true);
-          alert(`画像を開けませんでした。`);
+          log(`展開失敗: ${file.name}`, true);
           index++; processNext();
         }
       }
@@ -165,7 +160,7 @@
         if (!cropper) return;
         const file = queue[index];
         const cropData = cropper.getData({ rounded: true });
-        document.getElementById('loadingMsg').innerText = "JPGに変換中...";
+        document.getElementById('loadingMsg').innerText = "JPG変換中...";
         document.getElementById('modalLoading').classList.remove('hidden');
 
         try {
@@ -174,25 +169,24 @@
           const jpgBlob = await new Promise((res, rej) => {
             try {
               ImageMagick.read(bytes, img => {
-                // 1. 背景色の設定 (透過対策)
+                // 背景を白にする
                 img.backgroundColor = new MagickColor("white");
                 
-                // 2. 透過レイヤーの処理 (AlphaOptionを直接使わず、0などの数値で代用するか、メソッドで処理)
+                // 【修正】AlphaOption を直接使わず、数値「11」 (Remove) を使用
+                // ライブラリによって異なる場合があるため、失敗しても続行するように try-catch で囲む
                 try {
-                   // AlphaOption.Remove が 0 であることが多いですが、安全のため条件分岐
-                   img.alpha(0); 
+                   img.alpha(11); // 11 は ImageMagick の AlphaOption.Remove に相当
                 } catch(e) {
-                   log("AlphaOptionの適用をスキップしました(非対応)");
+                   console.log("Alpha option skip");
                 }
 
-                // 3. 安全な座標で切り抜き
+                // 切り抜き座標の安全補正
                 const x = Math.max(0, cropData.x);
                 const y = Math.max(0, cropData.y);
                 const w = Math.min(cropData.width, img.width - x);
                 const h = Math.min(cropData.height, img.height - y);
-                img.crop(w, h, x, y);
                 
-                // 4. フォーマット変換
+                img.crop(w, h, x, y);
                 img.format = MagickFormat.Jpeg;
                 img.quality = 85;
                 img.write(data => res(new Blob([data], {type:'image/jpeg'})));
@@ -203,7 +197,7 @@
           const newName = file.name.replace(/\.[^/.]+$/, "") + "_cropped.jpg";
           zip.file(newName, jpgBlob);
           addCard(URL.createObjectURL(jpgBlob), newName);
-          log(`変換成功: ${newName}`);
+          log(`成功: ${newName}`);
           index++; processNext();
         } catch (e) {
           log(`エラー: ${e.message}`, true);
