@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Image to JPG Converter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 md:p-8">
+  <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 md:p-8">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">あらゆる画像をJPGに一括変換</h1>
+      <p class="text-gray-500 text-sm">.j2, .heic, .tiff, .psd などに対応。ブラウザ上で安全に処理されます。</p>
+    </div>
+
+    <div class="flex items-center justify-center w-full mb-6">
+      <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-40 border-2 border-blue-300 border-dashed rounded-lg cursor-not-allowed bg-gray-100 transition duration-300">
+        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+          <svg class="w-10 h-10 mb-3 text-gray-400" id="uploadIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          <p class="mb-2 text-sm text-gray-700" id="uploadText"><span class="font-semibold">システム準備中...</span> しばらくお待ちください</p>
+        </div>
+        <input id="imageInput" type="file" multiple accept="image/*,.j2,.jp2,.heic,.tiff,.psd,.webp" class="hidden" disabled />
+      </label>
+    </div>
+
+    <div id="status" class="text-center text-blue-600 font-semibold mb-4 hidden">
+      変換処理中... しばらくお待ちください。
+    </div>
+
+    <div id="zipDownloadArea" class="text-center mb-8 hidden">
+      <button id="downloadZipBtn" class="px-8 py-3 bg-green-600 text-white font-bold rounded-full hover:bg-green-700 transition shadow-lg flex items-center justify-center mx-auto">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        すべての画像をZIPでダウンロード
+      </button>
+      <p id="zipStatus" class="text-sm text-gray-500 mt-2 hidden">ZIPファイルを作成中...</p>
+    </div>
+
+    <div id="outputArea" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+  </div>
+
+  <script type="module">
+    import { ImageMagick, initializeImageMagick, MagickFormat } from 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm/dist/index.mjs';
+
+    const imageInput = document.getElementById('imageInput');
+    const dropZone = document.getElementById('dropZone');
+    const uploadText = document.getElementById('uploadText');
+    const uploadIcon = document.getElementById('uploadIcon');
+    const statusDiv = document.getElementById('status');
+    const outputArea = document.getElementById('outputArea');
+    const zipDownloadArea = document.getElementById('zipDownloadArea');
+    const downloadZipBtn = document.getElementById('downloadZipBtn');
+    const zipStatus = document.getElementById('zipStatus');
+
+    let currentZip = null; 
+    let isProcessing = false;
+
+    // 1. Magick.WASMの初期化（重い処理なのでロード完了までUIをロック）
+    const wasmUrl = 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm/dist/magick.wasm';
+    
+    initializeImageMagick(wasmUrl).then(() => {
+      // 準備完了でUIをアンロック
+      imageInput.disabled = false;
+      dropZone.classList.remove('cursor-not-allowed', 'bg-gray-100');
+      dropZone.classList.add('cursor-pointer', 'bg-blue-50', 'hover:bg-blue-100');
+      uploadIcon.classList.replace('text-gray-400', 'text-blue-500');
+      uploadText.innerHTML = '<span class="font-semibold">クリックまたはドラッグ＆ドロップで画像を選択</span><br><span class="text-xs text-gray-500">複数選択OK (.j2, .heic, .png 等)</span>';
+    }).catch(err => {
+      uploadText.innerText = "エンジンの読み込みに失敗しました。";
+      uploadText.classList.add('text-red-500');
+      console.error(err);
+    });
+
+    // 画像変換処理をPromiseでラップ（ループ処理しやすくするため）
+    const convertToJpg = (file) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const data = new Uint8Array(arrayBuffer);
+
+          ImageMagick.read(data, (image) => {
+            image.format = MagickFormat.Jpeg;
+            image.quality = 85; // 画質設定 (0-100)
+            
+            // 背景が透過の画像（PNG等）は白背景にする
+            // image.backgroundColor = ImageMagick.Color.White; // 必要に応じて有効化
+
+            image.write((outData) => {
+              const blob = new Blob([outData], { type: 'image/jpeg' });
+              resolve(blob);
+            });
+          });
+        } catch (error) {
+          reject(error);
+        }
+      });
+    };
+
+    // ファイルが選択された時の処理
+    imageInput.addEventListener('change', async function(e) {
+      const files = Array.from(e.target.files);
+      if (files.length === 0 || isProcessing) return;
+
+      isProcessing = true;
+      imageInput.disabled = true;
+      dropZone.classList.add('opacity-50');
+
+      // UIの初期化
+      outputArea.innerHTML = '';
+      zipDownloadArea.classList.add('hidden');
+      statusDiv.classList.remove('hidden', 'text-green-600', 'text-red-600');
+      statusDiv.classList.add('text-blue-600');
+      
+      currentZip = new JSZip();
+
+      try {
+        // 複数ファイルを順番に処理
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          statusDiv.innerText = `変換中... (${i + 1} / ${files.length}) : ${file.name}`;
+          
+          // 元のファイル名から拡張子を取り除き、.jpgを付与
+          const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+          const newFileName = `${baseName}.jpg`;
+
+          // Magick.WASMで変換実行
+          const blob = await convertToJpg(file);
+
+          // ZIPに追加
+          currentZip.file(newFileName, blob);
+
+          // UI用プレビューの作成
+          const blobUrl = URL.createObjectURL(blob);
+          createPreviewCard(blobUrl, newFileName);
+
+          // ブラウザのフリーズ防止
+          await new Promise(r => setTimeout(r, 10));
+        }
+
+        statusDiv.innerText = "すべての変換が完了しました！";
+        statusDiv.classList.replace('text-blue-600', 'text-green-600');
+        if (files.length > 1) {
+          zipDownloadArea.classList.remove('hidden'); // 複数枚の時のみZIPボタン表示
+        }
+
+      } catch (error) {
+        console.error(error);
+        statusDiv.innerText = "一部の画像の変換に失敗しました。未対応の形式かデータが破損している可能性があります。";
+        statusDiv.classList.replace('text-blue-600', 'text-red-600');
+      } finally {
+        isProcessing = false;
+        imageInput.disabled = false;
+        dropZone.classList.remove('opacity-50');
+        imageInput.value = ""; 
+      }
+    });
+
+    // プレビューカードを生成する関数
+    function createPreviewCard(blobUrl, fileName) {
+      const container = document.createElement('div');
+      container.className = 'border border-gray-200 rounded-lg p-4 bg-gray-50 flex flex-col items-center justify-between h-full';
+
+      const imgPreview = document.createElement('img');
+      imgPreview.src = blobUrl;
+      imgPreview.className = 'w-full h-40 object-contain border border-gray-300 bg-white shadow-sm mb-3 rounded';
+      
+      const title = document.createElement('p');
+      title.className = 'text-sm text-gray-600 mb-3 truncate w-full text-center';
+      title.title = fileName;
+      title.innerText = fileName;
+
+      const downloadBtn = document.createElement('a');
+      downloadBtn.href = blobUrl;
+      downloadBtn.download = fileName;
+      downloadBtn.className = 'w-full text-center text-sm px-4 py-2 bg-blue-50 border border-blue-500 text-blue-600 rounded hover:bg-blue-500 hover:text-white transition';
+      downloadBtn.innerText = '保存';
+
+      container.appendChild(imgPreview);
+      container.appendChild(title);
+      container.appendChild(downloadBtn);
+      outputArea.appendChild(container);
+    }
+
+    // ZIPダウンロード処理
+    downloadZipBtn.addEventListener('click', function() {
+      if (!currentZip) return;
+      
+      downloadZipBtn.disabled = true;
+      downloadZipBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      zipStatus.classList.remove('hidden');
+
+      currentZip.generateAsync({type: "blob"}).then(function(content) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = `converted_images.zip`;
+        link.click();
+        
+        downloadZipBtn.disabled = false;
+        downloadZipBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        zipStatus.classList.add('hidden');
+      });
+    });
+  </script>
+</body>
+</html>
