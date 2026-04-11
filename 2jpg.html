@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Universal Image Converter v0.0.39</title>
+  <title>Universal Image to JPG Converter</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
@@ -11,15 +11,16 @@
   <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 md:p-8">
     <div class="text-center mb-8">
       <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">あらゆる画像をJPGに一括変換</h1>
-      <p class="text-gray-500 text-sm">Magick.WASM v0.0.39 使用。ブラウザ内で安全に完結します。</p>
+      <p class="text-gray-500 text-sm">.j2, .heic, .tiff, .psd 等に対応。ブラウザ上で安全に処理されます。</p>
     </div>
 
     <div class="flex items-center justify-center w-full mb-6">
       <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-40 border-2 border-blue-300 border-dashed rounded-lg cursor-not-allowed bg-gray-100 transition duration-300">
-        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+        <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
           <svg id="uploadIcon" class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-          <p id="uploadText" class="mb-2 text-sm text-gray-700 text-center px-4">
-            <span class="font-semibold text-orange-500">エンジン読み込み中...</span><br>約14MBのデータをダウンロードしています
+          <p id="uploadText" class="text-sm text-gray-700">
+            <span class="font-bold text-orange-600 block mb-1">エンジン読み込み中...</span>
+            <span id="loadingProgress" class="text-xs text-gray-500">WASMファイルをダウンロードしています (約14MB)</span>
           </p>
         </div>
         <input id="imageInput" type="file" multiple accept="image/*,.j2,.jp2,.heic,.tiff,.psd,.webp" class="hidden" disabled />
@@ -33,13 +34,14 @@
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
         すべての画像をZIPで保存
       </button>
+      <p id="zipStatus" class="text-sm text-gray-500 mt-2 hidden">ZIP生成中...</p>
     </div>
 
     <div id="outputArea" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
   </div>
 
   <script type="module">
-    // バージョン 0.0.39 の index.js を指定
+    // index.js を使用 (404対策)
     import { ImageMagick, initializeImageMagick, MagickFormat } from 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/index.js';
 
     const imageInput = document.getElementById('imageInput');
@@ -49,29 +51,50 @@
     const outputArea = document.getElementById('outputArea');
     const zipDownloadArea = document.getElementById('zipDownloadArea');
     const downloadZipBtn = document.getElementById('downloadZipBtn');
+    const loadingProgress = document.getElementById('loadingProgress');
 
     let currentZip = null;
     let isProcessing = false;
 
-    // WASMファイルへのフルパス
-    const wasmUrl = 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/magick.wasm';
+    // --- 1. エンジンの手動ダウンロードと初期化 (Empty Buffer対策) ---
+    async function bootMagick() {
+      const wasmUrl = 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/magick.wasm';
+      
+      try {
+        console.log("WASMのフェッチを開始...");
+        const response = await fetch(wasmUrl);
+        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        // ArrayBufferとして取得
+        const wasmBuffer = await response.arrayBuffer();
+        console.log(`WASMダウンロード完了: ${wasmBuffer.byteLength} bytes`);
 
-    // --- 1. エンジンの初期化 ---
-    console.log("Magick.WASM 0.0.39 初期化中...");
-    
-    initializeImageMagick(wasmUrl).then(() => {
-      console.log("Magick.WASM 初期化成功");
+        if (wasmBuffer.byteLength === 0) throw new Error("WASMファイルが空です。");
+
+        // 初期化実行 (Uint8Arrayを渡す)
+        await initializeImageMagick(new Uint8Array(wasmBuffer));
+        
+        console.log("Magick.WASM 準備完了");
+        enableUI();
+      } catch (err) {
+        console.error("起動に失敗しました:", err);
+        uploadText.innerHTML = `<span class="text-red-500 font-bold text-lg">エラーが発生しました</span><br><span class="text-xs text-gray-400">${err.message}</span>`;
+      }
+    }
+
+    function enableUI() {
       imageInput.disabled = false;
       dropZone.classList.remove('cursor-not-allowed', 'bg-gray-100');
       dropZone.classList.add('cursor-pointer', 'bg-blue-50', 'hover:bg-blue-100');
       document.getElementById('uploadIcon').classList.replace('text-gray-400', 'text-blue-500');
-      uploadText.innerHTML = '<span class="font-semibold text-blue-600 text-lg">準備完了！</span><br>画像を選択またはドロップ';
-    }).catch(err => {
-      console.error("初期化失敗:", err);
-      uploadText.innerHTML = `<span class="text-red-500 font-bold">読み込み失敗</span><br>F12でエラーを確認してください`;
-    });
+      uploadText.innerHTML = '<span class="font-bold text-blue-600 text-lg text-center">準備完了！</span><br>クリックして画像を選択、またはドラッグ＆ドロップ';
+    }
 
-    // --- 2. イベントハンドラ ---
+    // 起動！
+    bootMagick();
+
+    // --- 2. 変換ロジック ---
     imageInput.addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0 || isProcessing) return;
@@ -87,46 +110,40 @@
       try {
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          statusDiv.innerText = `変換中 (${i + 1}/${files.length}): ${file.name}`;
+          statusDiv.innerText = `[${i + 1} / ${files.length}] 変換中: ${file.name}`;
           
-          // UIを更新させるための待機
-          await new Promise(r => setTimeout(r, 100));
+          // ステータス描画を促すための微小な待機
+          await new Promise(r => setTimeout(r, 50));
 
           const arrayBuffer = await file.arrayBuffer();
-          const data = new Uint8Array(arrayBuffer);
+          const bytes = new Uint8Array(arrayBuffer);
 
-          // Magick.WASM 処理
-          await new Promise((resolve, reject) => {
-            try {
-              ImageMagick.read(data, (image) => {
-                image.format = MagickFormat.Jpeg;
-                image.quality = 85;
+          // ImageMagick 読み込みと変換
+          await new Promise((resolve) => {
+            ImageMagick.read(bytes, (image) => {
+              image.format = MagickFormat.Jpeg;
+              image.quality = 85;
 
-                image.write((outData) => {
-                  const blob = new Blob([outData], { type: 'image/jpeg' });
-                  const fileName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
-                  
-                  // ZIPへ追加
-                  currentZip.file(fileName, blob);
+              image.write((outData) => {
+                const blob = new Blob([outData], { type: 'image/jpeg' });
+                const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                
+                currentZip.file(newName, blob);
 
-                  // 画面にカードを表示
-                  const url = URL.createObjectURL(blob);
-                  addCardToUI(url, fileName);
-                  
-                  resolve();
-                });
+                const url = URL.createObjectURL(blob);
+                addThumbnail(url, newName);
+                resolve();
               });
-            } catch (err) {
-              console.error(`${file.name} の処理に失敗:`, err);
-              resolve(); // 1つ失敗しても次へ行く
-            }
+            });
           });
         }
-        statusDiv.innerText = "すべての変換が完了しました！";
+        statusDiv.innerText = "すべての処理が完了しました！";
         statusDiv.className = "text-center text-green-600 font-semibold mb-4";
         if (files.length > 1) zipDownloadArea.classList.remove('hidden');
+
       } catch (err) {
-        statusDiv.innerText = "エラーが発生しました: " + err.message;
+        console.error(err);
+        statusDiv.innerText = "失敗したファイルがあります: " + err.message;
         statusDiv.className = "text-center text-red-600 font-semibold mb-4";
       } finally {
         isProcessing = false;
@@ -135,26 +152,34 @@
       }
     });
 
-    function addCardToUI(url, name) {
+    function addThumbnail(url, name) {
       const div = document.createElement('div');
-      div.className = 'bg-white border rounded-lg p-3 shadow-sm flex flex-col items-center';
+      div.className = 'bg-white border rounded-lg p-3 shadow-sm flex flex-col items-center animate-fade-in';
       div.innerHTML = `
-        <img src="${url}" class="w-full h-32 object-contain bg-gray-50 mb-2 rounded shadow-inner">
-        <p class="w-full text-center truncate text-xs font-mono text-gray-600 mb-2">${name}</p>
-        <a href="${url}" download="${name}" class="text-xs text-blue-500 hover:text-blue-700 font-bold border border-blue-200 px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 transition">保存</a>
+        <img src="${url}" class="w-full h-32 object-contain bg-gray-100 rounded mb-2 shadow-inner">
+        <p class="w-full text-center truncate text-[10px] text-gray-500 mb-2 font-mono">${name}</p>
+        <a href="${url}" download="${name}" class="w-full text-center text-xs py-1.5 bg-blue-50 border border-blue-400 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-colors duration-200">保存</a>
       `;
       outputArea.appendChild(div);
     }
 
     downloadZipBtn.addEventListener('click', async () => {
-      statusDiv.innerText = "ZIP生成中...";
+      document.getElementById('zipStatus').classList.remove('hidden');
       const content = await currentZip.generateAsync({ type: "blob" });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
-      link.download = "converted_images.zip";
+      link.download = "converted_images_all.zip";
       link.click();
-      statusDiv.innerText = "完了しました！";
+      document.getElementById('zipStatus').classList.add('hidden');
     });
   </script>
+
+  <style>
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fade-in 0.3s ease-out; }
+  </style>
 </body>
 </html>
