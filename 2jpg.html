@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Editor Pro - Debug Mode</title>
+  <title>Image Editor Pro - Final Fix</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
@@ -13,62 +13,51 @@
 
   <div class="p-4 md:p-8 max-w-6xl mx-auto">
     <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6">
-      
-      <div class="flex justify-between items-start mb-6">
-        <div>
-          <h1 class="text-2xl font-bold text-white mb-1">画像切り抜き & JPG変換 <span class="text-xs bg-red-600 px-2 py-0.5 rounded ml-2">DEBUG MODE</span></h1>
-          <p class="text-slate-400 text-xs">PSD/HEICオフセット補正・EXIF回転補正適用済み</p>
-        </div>
-        <button onclick="location.reload()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded transition">リセット</button>
-      </div>
+      <h1 class="text-xl font-bold text-white mb-4">画像切り抜きツール <span class="text-xs font-normal text-slate-400">Ver 2.1 (Geometry Fix)</span></h1>
 
-      <div id="debugLog" class="mb-6 p-4 bg-black rounded-lg font-mono text-[10px] leading-relaxed text-green-400 overflow-y-auto max-h-48 border border-slate-700 shadow-inner">
-        <span class="text-blue-400">[SYSTEM]</span> エンジンを初期化中...<br>
-      </div>
+      <div id="debugLog" class="mb-6 p-4 bg-black rounded-lg font-mono text-[10px] text-green-400 overflow-y-auto max-h-40 border border-slate-700 shadow-inner"></div>
 
       <div class="mb-8">
-        <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-600 border-dashed rounded-xl cursor-not-allowed bg-slate-800/50 hover:border-blue-500 transition-all duration-300">
+        <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-600 border-dashed rounded-xl cursor-pointer bg-slate-800/50 hover:border-blue-500 transition-all">
           <div id="uploadUI" class="text-center">
-            <p id="uploadText" class="text-sm text-slate-400">Loading ImageMagick Engine...</p>
+            <p id="uploadText" class="text-sm text-slate-400 font-bold">画像を選択またはドロップ</p>
           </div>
-          <input id="imageInput" type="file" multiple accept="image/*,.j2,.jp2,.heic,.tiff,.psd,.webp" class="hidden" disabled />
+          <input id="imageInput" type="file" multiple accept="image/*,.j2,.jp2,.heic,.tiff,.psd,.webp" class="hidden" />
         </label>
       </div>
 
       <div id="zipArea" class="text-center mb-8 hidden">
-        <button id="downloadZipBtn" class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-700 transition shadow-lg flex items-center justify-center mx-auto">一括保存 (ZIP)</button>
+        <button id="downloadZipBtn" class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-700 shadow-lg transition">一括保存 (ZIP)</button>
       </div>
 
       <div id="outputArea" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4"></div>
     </div>
   </div>
 
-  <div id="cropModal" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center hidden p-4 backdrop-blur-md">
-    <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-700">
-      <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between bg-slate-800/50">
+  <div id="cropModal" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-800 rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-700">
+      <div class="px-6 py-3 border-b border-slate-700 flex items-center justify-between">
         <h2 id="modalTitle" class="font-bold text-slate-200 truncate text-sm">編集</h2>
-        <span id="queueInfo" class="text-[10px] font-bold bg-indigo-900 text-indigo-300 px-3 py-1 rounded-full text-white">0 / 0</span>
+        <span id="queueInfo" class="text-[10px] bg-indigo-900 text-indigo-300 px-3 py-1 rounded-full">0 / 0</span>
       </div>
-      
-      <div class="flex-grow p-4 bg-[#0a0a0a] flex items-center justify-center relative min-h-[50vh]">
+      <div class="flex-grow p-4 bg-black flex items-center justify-center relative min-h-[40vh]">
         <img id="editingImage" class="max-w-full max-h-full block">
         <div id="modalLoading" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white">
           <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p id="loadingMsg" class="text-xs font-bold tracking-widest uppercase">Processing...</p>
+          <p id="loadingMsg" class="text-[10px] font-bold uppercase">Processing...</p>
         </div>
       </div>
-
       <div class="p-6 border-t border-slate-700 bg-slate-800">
         <div class="flex flex-wrap items-center justify-between gap-4">
-          <div class="flex gap-1 bg-slate-900 p-1 rounded-lg border border-slate-700">
-            <button class="ratio-btn px-4 py-2 text-xs font-medium rounded-md bg-indigo-600 text-white" data-ratio="NaN">フリー</button>
-            <button class="ratio-btn px-4 py-2 text-xs font-medium rounded-md text-slate-400 hover:text-white" data-ratio="1.77777777">16:9</button>
-            <button class="ratio-btn px-4 py-2 text-xs font-medium rounded-md text-slate-400 hover:text-white" data-ratio="1.33333333">4:3</button>
-            <button class="ratio-btn px-4 py-2 text-xs font-medium rounded-md text-slate-400 hover:text-white" data-ratio="1">1:1</button>
+          <div class="flex gap-1 bg-slate-900 p-1 rounded-lg">
+            <button class="ratio-btn px-4 py-2 text-xs rounded-md bg-indigo-600 text-white" data-ratio="NaN">フリー</button>
+            <button class="ratio-btn px-4 py-2 text-xs rounded-md text-slate-400" data-ratio="1.77777777">16:9</button>
+            <button class="ratio-btn px-4 py-2 text-xs rounded-md text-slate-400" data-ratio="1.33333333">4:3</button>
+            <button class="ratio-btn px-4 py-2 text-xs rounded-md text-slate-400" data-ratio="1">1:1</button>
           </div>
-          <div class="flex gap-3 w-full sm:w-auto">
-            <button id="skipBtn" class="flex-1 sm:flex-none px-6 py-2.5 text-xs font-bold text-slate-400 border border-slate-600 rounded-full hover:bg-slate-700 transition">スキップ</button>
-            <button id="cropConfirmBtn" class="flex-1 sm:flex-none px-10 py-2.5 bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-700 shadow-lg shadow-indigo-900/20 transition">適用して次へ</button>
+          <div class="flex gap-3">
+            <button id="skipBtn" class="px-6 py-2.5 text-xs font-bold text-slate-400 border border-slate-600 rounded-full hover:bg-slate-700 transition">スキップ</button>
+            <button id="cropConfirmBtn" class="px-10 py-2.5 bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-700 shadow-lg transition">決定</button>
           </div>
         </div>
       </div>
@@ -81,224 +70,152 @@
       initializeImageMagick, 
       MagickFormat, 
       MagickColor,
-      MagickGeometry
+      MagickGeometry,
+      CompositeOperator
     } from 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/index.js';
 
     const logPanel = document.getElementById('debugLog');
     function log(msg, type = 'info') {
       const colors = { info: 'text-green-400', warn: 'text-yellow-400', err: 'text-red-500', debug: 'text-blue-400' };
-      const time = new Date().toLocaleTimeString();
-      logPanel.innerHTML += `<span class="text-slate-600">[${time}]</span> <span class="${colors[type]}">${msg}</span><br>`;
+      logPanel.innerHTML += `> <span class="${colors[type]}">${msg}</span><br>`;
       logPanel.scrollTop = logPanel.scrollHeight;
     }
 
     async function initApp() {
-      const wasmUrl = 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/magick.wasm';
       try {
-        log("WASMバイナリをロード中...");
-        const resp = await fetch(wasmUrl);
-        const wasmBytes = await resp.arrayBuffer();
-        await initializeImageMagick(new Uint8Array(wasmBytes));
-        log("ImageMagickエンジン 準備完了", "debug");
-        startApp();
-      } catch (err) {
-        log("初期化失敗: " + err.message, "err");
-      }
+        const resp = await fetch('https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/magick.wasm');
+        await initializeImageMagick(new Uint8Array(await resp.arrayBuffer()));
+        log("ImageMagick Engine Ready.");
+        document.getElementById('imageInput').disabled = false;
+      } catch (err) { log("Init Failed: " + err.message, "err"); }
     }
 
-    function startApp() {
-      const input = document.getElementById('imageInput');
-      const dropZone = document.getElementById('dropZone');
-      const uploadText = document.getElementById('uploadText');
+    let queue = [], index = 0, zip = null, cropper = null;
 
-      input.disabled = false;
-      dropZone.classList.replace('cursor-not-allowed', 'cursor-pointer');
-      uploadText.innerText = "クリックまたはドラッグ＆ドロップで画像を選択";
-      uploadText.className = "text-sm text-indigo-400 font-bold";
+    document.getElementById('imageInput').addEventListener('change', (e) => {
+      queue = Array.from(e.target.files);
+      if (!queue.length) return;
+      index = 0; zip = new JSZip();
+      document.getElementById('outputArea').innerHTML = '';
+      processNext();
+    });
 
-      let queue = [], index = 0, zip = null, cropper = null;
-
-      input.addEventListener('change', (e) => {
-        queue = Array.from(e.target.files);
-        if (!queue.length) return;
-        index = 0; zip = new JSZip();
-        document.getElementById('outputArea').innerHTML = '';
-        log(`${queue.length} 個のファイルをキューに追加しました`);
-        processNext();
-      });
-
-      async function processNext() {
-        if (index >= queue.length) {
-          log("全処理が完了しました", "debug");
-          closeModal();
-          if (document.getElementById('outputArea').childElementCount > 0) {
-             document.getElementById('zipArea').classList.remove('hidden');
-          }
-          return;
-        }
-
-        const file = queue[index];
-        openModal(file.name, index + 1, queue.length);
-
-        try {
-          const bytes = new Uint8Array(await file.arrayBuffer());
-          log(`ファイル読込中: ${file.name} (${Math.round(bytes.length/1024)}KB)`);
-
-          // プレビュー用にPNGへ変換
-          const pngBlob = await new Promise((res, rej) => {
-            try {
-              ImageMagick.read(bytes, img => {
-                log(`プレビュー生成: 元画像サイズ ${img.width}x${img.height}`);
-                img.write(data => res(new Blob([data], {type:'image/png'})));
-              });
-            } catch (e) { rej(e); }
-          });
-
-          const url = URL.createObjectURL(pngBlob);
-          const imgEl = document.getElementById('editingImage');
-          imgEl.src = url;
-          imgEl.onload = () => {
-            document.getElementById('modalLoading').classList.add('hidden');
-            if(cropper) cropper.destroy();
-            cropper = new Cropper(imgEl, { 
-              viewMode: 1, 
-              autoCropArea: 0.8,
-              background: false
-            });
-          };
-        } catch (e) {
-          log(`プレビュー生成失敗: ${file.name} - ${e.message}`, "err");
-          index++; processNext();
-        }
+    async function processNext() {
+      if (index >= queue.length) {
+        closeModal();
+        if (document.getElementById('outputArea').childElementCount > 0) document.getElementById('zipArea').classList.remove('hidden');
+        return;
       }
 
-      document.getElementById('cropConfirmBtn').onclick = async () => {
-        if (!cropper) return;
-        const file = queue[index];
-        const cropData = cropper.getData({ rounded: true });
+      const file = queue[index];
+      openModal(file.name, index + 1, queue.length);
+
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
         
-        log(`クロップリクエスト: x=${cropData.x}, y=${cropData.y}, w=${cropData.width}, h=${cropData.height}`, "debug");
-        
-        document.getElementById('loadingMsg').innerText = "Applying Changes...";
-        document.getElementById('modalLoading').classList.remove('hidden');
-
-        try {
-          const bytes = new Uint8Array(await file.arrayBuffer());
-          
-          const jpgBlob = await new Promise((res, rej) => {
-            try {
-              ImageMagick.read(bytes, img => {
-                // --- 重要補正セクション ---
-                
-                // 1. 方向補正 (EXIF Orientation)
-                img.autoOrient();
-                log(`方向補正適用後のサイズ: ${img.width}x${img.height}`, "debug");
-
-                // 2. 仮想キャンバス/オフセットの取得とリセット (PSD対策)
-                const offsetX = img.page.x;
-                const offsetY = img.page.y;
-                if(offsetX !== 0 || offsetY !== 0) {
-                  log(`仮想キャンバス・オフセット検知: ${offsetX}, ${offsetY}`, "warn");
-                }
-                
-                // キャンバスを物理画像サイズに合わせる (repage相当)
-                img.page = new MagickGeometry(0, 0, img.width, img.height);
-
-                // 3. 透明度処理
-                img.backgroundColor = new MagickColor("white");
-                try {
-                   img.alpha(11); // AlphaOption.Remove
-                } catch(e) { log("Alpha処理スキップ", "debug"); }
-
-                // 4. 切り抜き座標の最終計算
-                const realX = Math.max(0, cropData.x);
-                const realY = Math.max(0, cropData.y);
-                const realW = Math.min(cropData.width, img.width - realX);
-                const realH = Math.min(cropData.height, img.height - realY);
-
-                log(`最終適用座標: ${realW}x${realH} at (${realX},${realY})`, "info");
-                
-                img.crop(realW, realH, realX, realY);
-                
-                // 5. 出力設定
-                img.format = MagickFormat.Jpeg;
-                img.quality = 90;
-                img.write(data => res(new Blob([data], {type:'image/jpeg'})));
-              });
-            } catch (e) { rej(e); }
+        // 【重要】プレビュー時にも方向補正とページリセットを適用し、表示と内部データを完全に一致させる
+        const pngBlob = await new Promise((res) => {
+          ImageMagick.read(bytes, img => {
+            img.autoOrient(); // EXIF回転を物理的に適用
+            img.page = new MagickGeometry(0, 0, img.width, img.height); // キャンバス情報をリセット
+            log(`Preview Load: ${img.width}x${img.height} (Oriented)`);
+            img.write(data => res(new Blob([data], {type:'image/png'})));
           });
+        });
 
-          const newName = file.name.replace(/\.[^/.]+$/, "") + "_cropped.jpg";
-          zip.file(newName, jpgBlob);
-          addCard(URL.createObjectURL(jpgBlob), newName);
-          log(`保存完了: ${newName}`, "info");
-          
-          index++; 
-          processNext();
-        } catch (e) {
-          log(`変換エラー: ${e.message}`, "err");
-          alert(`エラーが発生しました: ${e.message}`);
+        const imgEl = document.getElementById('editingImage');
+        imgEl.src = URL.createObjectURL(pngBlob);
+        imgEl.onload = () => {
           document.getElementById('modalLoading').classList.add('hidden');
-        }
-      };
-
-      document.getElementById('skipBtn').onclick = () => { 
-        log(`${queue[index].name} をスキップしました`, "warn");
-        index++; 
-        processNext(); 
-      };
-      
-      document.querySelectorAll('.ratio-btn').forEach(b => {
-        b.onclick = (e) => {
-          cropper.setAspectRatio(parseFloat(e.target.dataset.ratio));
-          document.querySelectorAll('.ratio-btn').forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white'));
-          document.querySelectorAll('.ratio-btn').forEach(btn => btn.classList.add('text-slate-400'));
-          e.target.classList.replace('text-slate-400', 'text-white');
-          e.target.classList.add('bg-indigo-600');
+          if(cropper) cropper.destroy();
+          cropper = new Cropper(imgEl, { viewMode: 1, autoCropArea: 0.8 });
         };
-      });
-
-      downloadZipBtn.onclick = async () => {
-        log("ZIPファイル生成中...");
-        const content = await zip.generateAsync({type:"blob"});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(content);
-        a.download = `edited_images_${Date.now()}.zip`;
-        a.click();
-        log("ダウンロード開始");
-      };
+      } catch (e) { log(`Load Error: ${e.message}`, "err"); index++; processNext(); }
     }
 
+    document.getElementById('cropConfirmBtn').onclick = async () => {
+      if (!cropper) return;
+      const file = queue[index];
+      const data = cropper.getData({ rounded: true }); // 切り抜き座標
+      
+      document.getElementById('modalLoading').classList.remove('hidden');
+      document.getElementById('loadingMsg').innerText = "Cropping...";
+
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const jpgBlob = await new Promise((res, rej) => {
+          ImageMagick.read(bytes, img => {
+            try {
+              // 1. 方向を正す
+              img.autoOrient();
+              
+              // 2. 仮想キャンバスを現在のサイズにリセット（ズレ防止の核心）
+              img.page = new MagickGeometry(0, 0, img.width, img.height);
+
+              // 3. 切り抜き座標の作成 (w, h, x, y ではなく Geometry を使う)
+              // API: new MagickGeometry(width, height, x, y)
+              const cropGeom = new MagickGeometry(data.width, data.height, Math.max(0, data.x), Math.max(0, data.y));
+              
+              log(`Apply Crop: ${data.width}x${data.height} at ${data.x},${data.y}`, "debug");
+              
+              img.crop(cropGeom);
+
+              // 4. クロップ後の余分なページ情報を破棄 (重要)
+              img.page = new MagickGeometry(0, 0, img.width, img.height);
+
+              // 5. JPG出力設定
+              img.backgroundColor = new MagickColor("white");
+              try { img.alpha(11); } catch(e){}
+              img.format = MagickFormat.Jpeg;
+              img.quality = 90;
+
+              img.write(data => res(new Blob([data], {type:'image/jpeg'})));
+            } catch(e) { rej(e); }
+          });
+        });
+
+        const newName = file.name.replace(/\.[^/.]+$/, "") + "_edit.jpg";
+        zip.file(newName, jpgBlob);
+        addCard(URL.createObjectURL(jpgBlob), newName);
+        log(`Success: ${newName}`);
+        index++; processNext();
+      } catch (e) {
+        log(`Crop Error: ${e.message}`, "err");
+        document.getElementById('modalLoading').classList.add('hidden');
+      }
+    };
+
+    // モーダル制御・カード追加などの補助関数
     function openModal(name, cur, total) {
       document.getElementById('cropModal').classList.remove('hidden');
       document.getElementById('modalTitle').innerText = name;
       document.getElementById('queueInfo').innerText = `${cur} / ${total}`;
       document.getElementById('modalLoading').classList.remove('hidden');
     }
-
     function closeModal() { document.getElementById('cropModal').classList.add('hidden'); }
-
     function addCard(url, name) {
-      const area = document.getElementById('outputArea');
       const div = document.createElement('div');
-      div.className = "bg-slate-800 p-2 border border-slate-700 rounded-xl shadow-xl animate-fade-in";
-      div.innerHTML = `
-        <img src="${url}" class="w-full h-24 object-contain rounded-lg mb-2 bg-black">
-        <p class="text-[8px] truncate mb-2 text-center text-slate-500 font-mono">${name}</p>
-        <a href="${url}" download="${name}" class="block text-center text-[10px] font-bold text-indigo-400 py-1.5 bg-indigo-950/30 border border-indigo-900/50 rounded-lg hover:bg-indigo-900/50 transition">DOWNLOAD</a>
-      `;
-      area.appendChild(div);
+      div.className = "bg-slate-800 p-2 border border-slate-700 rounded-lg text-center";
+      div.innerHTML = `<img src="${url}" class="h-20 w-full object-contain mb-1 bg-black rounded"><p class="text-[8px] truncate text-slate-500 mb-1">${name}</p><a href="${url}" download="${name}" class="text-[10px] text-indigo-400 font-bold">SAVE</a>`;
+      document.getElementById('outputArea').appendChild(div);
     }
+    document.querySelectorAll('.ratio-btn').forEach(b => {
+      b.onclick = (e) => {
+        cropper.setAspectRatio(parseFloat(e.target.dataset.ratio));
+        document.querySelectorAll('.ratio-btn').forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white'));
+        e.target.classList.add('bg-indigo-600', 'text-white');
+      };
+    });
+    document.getElementById('skipBtn').onclick = () => { index++; processNext(); };
+    document.getElementById('downloadZipBtn').onclick = async () => {
+      const content = await zip.generateAsync({type:"blob"});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(content);
+      a.download = "edited_images.zip";
+      a.click();
+    };
 
     initApp();
   </script>
-  
-  <style>
-    @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-  </style>
 </body>
 </html>
