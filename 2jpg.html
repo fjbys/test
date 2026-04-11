@@ -15,11 +15,12 @@
       <h1 class="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">画像一括コンバーター</h1>
       <p class="text-gray-500 text-sm mb-6">解析・EXIF制御・フォーマット変換をブラウザのみで完結</p>
       
-      <div class="flex flex-wrap justify-center gap-2">
+      <div class="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
         <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.PSD</span>
         <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.HEIC</span>
         <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.TIFF</span>
         <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.WEBP</span>
+        <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm font-mono">.TGA</span>
         <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.JPEG2000</span>
         <span class="px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-[10px] font-bold text-blue-500 shadow-sm">TO PNG/JPG</span>
       </div>
@@ -59,7 +60,7 @@
         </div>
 
         <div class="flex flex-col justify-end">
-          <input id="imageInput" type="file" multiple class="hidden" accept="image/*,.heic,.psd,.tiff,.webp" />
+          <input id="imageInput" type="file" multiple class="hidden" accept="image/*,.heic,.psd,.tiff,.webp,.tga,.jp2" />
           <label for="imageInput" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-center font-bold text-sm cursor-pointer transition-all shadow-lg shadow-blue-200 active:scale-[0.98]">
             画像を選択して変換
           </label>
@@ -107,7 +108,6 @@
       } catch(e) { debug("Init Error: " + e.message); }
     }
 
-    // UI切替ロジック
     const btnJpg = document.getElementById('setJpg');
     const btnPng = document.getElementById('setPng');
     btnJpg.onclick = () => {
@@ -147,6 +147,7 @@
         const shouldStrip = document.getElementById('stripExif').checked;
 
         await ImageMagick.readCollection(bytes, (images) => {
+          // 最大フレームを選択
           const img = [...images].sort((a,b) => (b.width*b.height)-(a.width*a.height))[0];
           img.autoOrient();
           img.page = new MagickGeometry(0,0,img.width,img.height);
@@ -179,7 +180,7 @@
     function addInfoCard(url, name, w, h, ratio, model) {
       const container = document.getElementById('outputArea');
       const card = document.createElement('div');
-      card.className = "bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-md shadow-gray-100/50 flex flex-col transition-hover hover:shadow-lg transition-all";
+      card.className = "bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-md shadow-gray-100/50 flex flex-col transition-all hover:shadow-lg";
       card.innerHTML = `
         <div class="h-40 bg-gray-50 flex items-center justify-center p-4 border-b border-gray-50">
           <img src="${url}" class="max-w-full max-h-full object-contain shadow-sm rounded">
