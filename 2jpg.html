@@ -2,71 +2,93 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Advanced Image Converter & Metadata Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Image Converter Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-200 min-h-screen p-4 sm:p-8">
+<body class="bg-gray-50 text-gray-800 min-h-screen">
 
-  <div class="max-w-4xl mx-auto bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-8">
-    <div class="mb-8 text-center">
-      <h1 class="text-2xl font-bold text-white mb-2 italic">Format & Metadata Master</h1>
-      <p class="text-slate-500 text-xs tracking-widest uppercase">Convert / Analyze / Strip EXIF</p>
+  <div class="max-w-5xl mx-auto p-6 sm:p-10">
+    
+    <div class="mb-10 text-center">
+      <h1 class="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">画像一括コンバーター</h1>
+      <p class="text-gray-500 text-sm mb-6">解析・EXIF制御・フォーマット変換をブラウザのみで完結</p>
+      
+      <div class="flex flex-wrap justify-center gap-2">
+        <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.PSD</span>
+        <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.HEIC</span>
+        <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.TIFF</span>
+        <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.WEBP</span>
+        <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.JPEG2000</span>
+        <span class="px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-[10px] font-bold text-blue-500 shadow-sm">TO PNG/JPG</span>
+      </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-      <div class="bg-black/40 p-5 rounded-2xl border border-slate-800">
-        <label class="block text-[10px] font-bold text-slate-500 mb-3 uppercase tracking-widest">Output Setting</label>
-        <select id="formatSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs mb-3">
-          <option value="JPG">JPG (Quality: 85%)</option>
-          <option value="PNG">PNG (Lossless)</option>
-        </select>
-        <div id="qualityInfo" class="text-[10px] text-indigo-400 font-mono">JPG Quality: 85%</div>
-        <input id="qualityRange" type="range" min="10" max="100" value="85" class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 mt-2">
-      </div>
+    <div class="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8">
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        
+        <div class="space-y-4">
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">保存形式と品質</label>
+          <div class="flex p-1 bg-gray-100 rounded-xl">
+            <button id="setJpg" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow-sm text-blue-600 transition">JPG</button>
+            <button id="setPng" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700 transition">PNG</button>
+          </div>
+          <div id="qualityBox">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-[10px] font-bold text-gray-400">QUALITY</span>
+              <span id="qValue" class="text-xs font-mono font-bold text-blue-600">85%</span>
+            </div>
+            <input id="qualityRange" type="range" min="10" max="100" value="85" class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+          </div>
+        </div>
 
-      <div class="bg-black/40 p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
-        <label class="block text-[10px] font-bold text-slate-500 mb-3 uppercase tracking-widest">Metadata Control</label>
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-300">EXIF情報を削除</span>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="stripExif" class="sr-only peer" checked>
-            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+        <div class="space-y-4">
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">プライバシー設定</label>
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+            <div>
+              <div class="text-xs font-bold text-gray-700">EXIF情報を削除</div>
+              <div class="text-[9px] text-gray-400 mt-0.5">位置情報・撮影日時など</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="stripExif" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex flex-col justify-end">
+          <input id="imageInput" type="file" multiple class="hidden" accept="image/*,.heic,.psd,.tiff,.webp" />
+          <label for="imageInput" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-center font-bold text-sm cursor-pointer transition-all shadow-lg shadow-blue-200 active:scale-[0.98]">
+            画像を選択して変換
           </label>
         </div>
-        <p class="text-[9px] text-slate-500 mt-2">※削除すると位置情報やカメラ設定が消去され、ファイル容量がわずかに減ります。</p>
       </div>
 
-      <div class="bg-indigo-900/20 p-5 rounded-2xl border border-indigo-500/30 flex flex-col items-center justify-center">
-        <input id="imageInput" type="file" multiple class="hidden" accept="image/*,.heic,.psd,.tiff,.webp" />
-        <label for="imageInput" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-center font-bold text-sm cursor-pointer transition shadow-lg shadow-indigo-900/40">
-          画像を選択
-        </label>
+      <div id="debugLog" class="mb-8 p-3 bg-gray-50 rounded-xl font-mono text-[9px] text-gray-400 overflow-y-auto max-h-24 border border-gray-100">
+        > エンジン待機中...
       </div>
-    </div>
 
-    <div id="debugLog" class="mb-6 p-4 bg-black rounded-xl font-mono text-[10px] text-green-400 overflow-y-auto max-h-40 border border-slate-800 shadow-inner">
-      > Engine ready. Waiting for input...
-    </div>
+      <div id="zipArea" class="mb-10 text-center hidden animate-bounce">
+        <button id="downloadZipBtn" class="bg-gray-900 text-white px-10 py-3 rounded-full font-bold hover:bg-black transition shadow-xl text-sm">
+          すべてをZIPで保存する
+        </button>
+      </div>
 
-    <div id="zipArea" class="mt-8 text-center hidden">
-      <button id="downloadZipBtn" class="bg-white text-slate-900 px-12 py-3 rounded-full font-bold hover:bg-slate-200 transition shadow-xl">ZIPファイルをダウンロード</button>
+      <div id="outputArea" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </div>
-
-    <div id="outputArea" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8"></div>
   </div>
 
   <script type="module">
     import { ImageMagick, initializeImageMagick, MagickFormat, MagickColor, MagickGeometry } from 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/index.js';
 
-    const debug = (msg, type='info') => {
+    const debug = (msg) => {
       const el = document.getElementById('debugLog');
-      const colors = { info:'text-green-400', err:'text-red-500', debug:'text-blue-400' };
-      el.innerHTML += `> <span class="${colors[type]}">${msg}</span><br>`;
+      el.innerHTML += `> ${msg}<br>`;
       el.scrollTop = el.scrollHeight;
     };
 
-    // 最大公約数を求める（比率計算用）
     const getGCD = (a, b) => b ? getGCD(b, a % b) : a;
     const getAspectRatio = (w, h) => {
       const common = getGCD(w, h);
@@ -74,17 +96,35 @@
     };
 
     let zip = null;
+    let currentFormat = 'JPG';
 
     async function init() {
       try {
         const resp = await fetch('https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/magick.wasm');
         await initializeImageMagick(new Uint8Array(await resp.arrayBuffer()));
-        debug("Engine Loaded.");
-      } catch(e) { debug("Init Error: " + e.message, "err"); }
+        debug("Engine Ready.");
+        document.getElementById('imageInput').disabled = false;
+      } catch(e) { debug("Init Error: " + e.message); }
     }
 
+    // UI切替ロジック
+    const btnJpg = document.getElementById('setJpg');
+    const btnPng = document.getElementById('setPng');
+    btnJpg.onclick = () => {
+      currentFormat = 'JPG';
+      btnJpg.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow-sm text-blue-600 transition";
+      btnPng.className = "flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700 transition";
+      document.getElementById('qualityBox').style.opacity = "1";
+    };
+    btnPng.onclick = () => {
+      currentFormat = 'PNG';
+      btnPng.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow-sm text-blue-600 transition";
+      btnJpg.className = "flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700 transition";
+      document.getElementById('qualityBox').style.opacity = "0.3";
+    };
+
     document.getElementById('qualityRange').oninput = (e) => {
-      document.getElementById('qualityInfo').innerText = `JPG Quality: ${e.target.value}%`;
+      document.getElementById('qValue').innerText = `${e.target.value}%`;
     };
 
     document.getElementById('imageInput').onchange = async (e) => {
@@ -92,91 +132,75 @@
       if(!files.length) return;
       zip = new JSZip();
       document.getElementById('outputArea').innerHTML = '';
-      debug(`Processing ${files.length} files...`, "debug");
+      debug(`Processing ${files.length} images...`);
       
       for(const file of files) await processFile(file);
       
       document.getElementById('zipArea').classList.remove('hidden');
-      debug("Batch processing complete.");
+      debug("Done.");
     };
 
     async function processFile(file) {
       try {
         const bytes = new Uint8Array(await file.arrayBuffer());
-        const format = document.getElementById('formatSelect').value;
         const quality = document.getElementById('qualityRange').value;
         const shouldStrip = document.getElementById('stripExif').checked;
 
         await ImageMagick.readCollection(bytes, (images) => {
           const img = [...images].sort((a,b) => (b.width*b.height)-(a.width*a.height))[0];
-          
           img.autoOrient();
           img.page = new MagickGeometry(0,0,img.width,img.height);
           
-          // --- 情報抽出 ---
-          const w = img.width;
-          const h = img.height;
+          const w = img.width, h = img.height;
           const ratio = getAspectRatio(w, h);
-          const model = img.getAttribute("exif:Model") || "None";
-          const date = img.getAttribute("exif:DateTime") || "Unknown";
+          const model = img.getAttribute("exif:Model") || "Unknown";
 
-          // --- 変換処理 ---
-          if(shouldStrip) {
-            img.strip(); // EXIF/メタデータ削除
-            debug(`Stripped metadata from ${file.name}`);
-          }
+          if(shouldStrip) img.strip();
 
-          if(format === 'JPG') {
+          if(currentFormat === 'JPG') {
             img.backgroundColor = new MagickColor("white");
             try { img.alpha(11); } catch(e){}
             img.quality = quality;
           }
           
-          const targetFormat = format === 'JPG' ? MagickFormat.Jpeg : MagickFormat.Png;
-          img.write(targetFormat, data => {
-            const ext = format.toLowerCase();
+          const fmt = currentFormat === 'JPG' ? MagickFormat.Jpeg : MagickFormat.Png;
+          img.write(fmt, data => {
+            const ext = currentFormat.toLowerCase();
             const blob = new Blob([data], {type: `image/${ext}`});
             const outName = file.name.replace(/\.[^/.]+$/, "") + "." + ext;
             zip.file(outName, blob);
-            addInfoCard(URL.createObjectURL(blob), outName, w, h, ratio, model, date);
+            addInfoCard(URL.createObjectURL(blob), outName, w, h, ratio, model);
             debug(`Converted: ${outName}`);
           });
         });
-      } catch(e) { debug(`Error [${file.name}]: ${e.message}`, "err"); }
+      } catch(e) { debug(`Error: ${file.name}`); }
     }
 
-    function addInfoCard(url, name, w, h, ratio, model, date) {
+    function addInfoCard(url, name, w, h, ratio, model) {
       const container = document.getElementById('outputArea');
       const card = document.createElement('div');
-      card.className = "bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl flex flex-col";
+      card.className = "bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-md shadow-gray-100/50 flex flex-col transition-hover hover:shadow-lg transition-all";
       card.innerHTML = `
-        <div class="h-32 bg-black flex items-center justify-center p-2">
-          <img src="${url}" class="max-w-full max-h-full object-contain">
+        <div class="h-40 bg-gray-50 flex items-center justify-center p-4 border-b border-gray-50">
+          <img src="${url}" class="max-w-full max-h-full object-contain shadow-sm rounded">
         </div>
-        <div class="p-4 flex-grow">
-          <div class="text-[10px] font-mono text-indigo-400 mb-1 truncate">${name}</div>
-          <div class="grid grid-cols-2 gap-2 mt-3">
-            <div class="text-center bg-slate-900 rounded-lg p-2">
-              <div class="text-[9px] text-slate-500 uppercase">Size</div>
-              <div class="text-[11px] font-bold">${w} × ${h}</div>
+        <div class="p-5">
+          <div class="text-[10px] font-bold text-gray-300 uppercase tracking-tighter mb-1 truncate">${name}</div>
+          <div class="flex gap-2 mt-4">
+            <div class="flex-1 bg-gray-50 rounded-xl p-2 text-center border border-gray-100">
+              <div class="text-[8px] text-gray-400 font-bold uppercase">Size</div>
+              <div class="text-[10px] font-bold text-gray-700">${w}×${h}</div>
             </div>
-            <div class="text-center bg-slate-900 rounded-lg p-2">
-              <div class="text-[9px] text-slate-500 uppercase">Ratio</div>
-              <div class="text-[11px] font-bold text-indigo-300">${ratio}</div>
+            <div class="flex-1 bg-blue-50/50 rounded-xl p-2 text-center border border-blue-50/50">
+              <div class="text-[8px] text-blue-400 font-bold uppercase">Ratio</div>
+              <div class="text-[10px] font-bold text-blue-600">${ratio}</div>
             </div>
           </div>
-          <div class="mt-3 space-y-1">
-            <div class="flex justify-between text-[10px]">
-              <span class="text-slate-500">Camera:</span>
-              <span class="text-slate-300 truncate ml-2">${model}</span>
-            </div>
-            <div class="flex justify-between text-[10px]">
-              <span class="text-slate-500">Date:</span>
-              <span class="text-slate-300">${date}</span>
-            </div>
+          <div class="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between text-[9px]">
+            <span class="text-gray-400 font-medium">Model: <span class="text-gray-600 font-bold">${model}</span></span>
+            <a href="${url}" download="${name}" class="text-blue-500 font-bold hover:underline italic">Download</a>
           </div>
         </div>
-        <a href="${url}" download="${name}" class="bg-slate-700 hover:bg-slate-600 text-center py-2 text-[10px] font-bold transition">単体ダウンロード</a>
       `;
       container.appendChild(card);
     }
@@ -185,7 +209,7 @@
       const content = await zip.generateAsync({type:"blob"});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(content);
-      a.download = `converted_images_${Date.now()}.zip`;
+      a.download = `converted_images.zip`;
       a.click();
     };
 
