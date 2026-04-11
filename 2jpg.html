@@ -2,63 +2,51 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Editor Pro - Core Fix</title>
+  <title>Image Editor Pro - High-Res Fix</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
-<body class="bg-slate-900 min-h-screen text-slate-200">
+<body class="bg-slate-900 text-slate-200 min-h-screen p-4">
 
-  <div class="p-4 md:p-8 max-w-6xl mx-auto">
-    <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6">
-      <h1 class="text-xl font-bold text-white mb-4">画像切り抜き <span class="text-xs font-normal text-slate-500">Multi-Layer/Thumbnail Fix</span></h1>
+  <div class="max-w-4xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-2xl border border-slate-700">
+    <h1 class="text-xl font-bold mb-4">画像切り抜きツール <span class="text-xs text-indigo-400">High-Res Frame Matcher</span></h1>
+    
+    <div id="debugLog" class="mb-4 p-3 bg-black rounded font-mono text-[10px] text-green-400 overflow-y-auto max-h-32 border border-slate-700"></div>
 
-      <div id="debugLog" class="mb-6 p-4 bg-black rounded-lg font-mono text-[10px] text-green-400 overflow-y-auto max-h-40 border border-slate-700 shadow-inner"></div>
+    <input id="imageInput" type="file" multiple class="hidden" accept="image/*,.heic,.psd,.tiff" />
+    <label for="imageInput" id="dropZone" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-600 rounded-xl cursor-pointer hover:border-indigo-500 transition-all bg-slate-800/50">
+      <p id="uploadText" class="text-sm font-bold text-slate-400">エンジン準備中...</p>
+    </label>
 
-      <div class="mb-8">
-        <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-600 border-dashed rounded-xl cursor-pointer bg-slate-800/50 hover:border-blue-500 transition-all">
-          <div class="text-center">
-            <p id="uploadText" class="text-sm text-slate-400 font-bold">画像を選択またはドロップ</p>
-          </div>
-          <input id="imageInput" type="file" multiple accept="image/*,.j2,.jp2,.heic,.tiff,.psd,.webp" class="hidden" />
-        </label>
-      </div>
-
-      <div id="zipArea" class="text-center mb-8 hidden">
-        <button id="downloadZipBtn" class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-700 shadow-lg transition">一括保存 (ZIP)</button>
-      </div>
-
-      <div id="outputArea" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4"></div>
+    <div id="zipArea" class="mt-6 text-center hidden">
+      <button id="downloadZipBtn" class="bg-indigo-600 px-8 py-2 rounded-full font-bold hover:bg-indigo-700 transition shadow-lg">一括保存 (ZIP)</button>
     </div>
+    <div id="outputArea" class="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-6"></div>
   </div>
 
   <div id="cropModal" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-slate-800 rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-700 shadow-2xl">
-      <div class="px-6 py-3 border-b border-slate-700 flex items-center justify-between">
-        <h2 id="modalTitle" class="font-bold text-slate-200 truncate text-sm italic">Edit</h2>
-        <span id="queueInfo" class="text-[10px] bg-indigo-900 text-indigo-300 px-3 py-1 rounded-full">0 / 0</span>
+    <div class="bg-slate-800 rounded-2xl w-full max-w-4xl overflow-hidden border border-slate-700 flex flex-col">
+      <div class="p-3 border-b border-slate-700 flex justify-between items-center">
+        <span id="modalTitle" class="text-xs font-mono truncate"></span>
+        <span id="queueInfo" class="text-[10px] bg-indigo-900 px-2 py-0.5 rounded"></span>
       </div>
-      <div class="flex-grow p-4 bg-black flex items-center justify-center relative min-h-[40vh]">
-        <img id="editingImage" class="max-w-full max-h-full block">
-        <div id="modalLoading" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white">
-          <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p id="loadingMsg" class="text-[10px] font-bold uppercase tracking-widest text-indigo-400">Processing Image...</p>
+      <div class="bg-black flex-grow flex items-center justify-center relative min-h-[50vh]">
+        <img id="editingImage" class="max-w-full max-h-full">
+        <div id="modalLoading" class="absolute inset-0 bg-black/70 flex flex-col items-center justify-center">
+          <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+          <p class="text-[10px] uppercase font-bold text-indigo-400">Processing...</p>
         </div>
       </div>
-      <div class="p-6 border-t border-slate-700 bg-slate-800">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <div class="flex gap-1 bg-slate-900 p-1 rounded-lg">
-            <button class="ratio-btn px-4 py-2 text-xs rounded-md bg-indigo-600 text-white" data-ratio="NaN">Free</button>
-            <button class="ratio-btn px-4 py-2 text-xs rounded-md text-slate-400" data-ratio="1.77777777">16:9</button>
-            <button class="ratio-btn px-4 py-2 text-xs rounded-md text-slate-400" data-ratio="1.33333333">4:3</button>
-            <button class="ratio-btn px-4 py-2 text-xs rounded-md text-slate-400" data-ratio="1">1:1</button>
-          </div>
-          <div class="flex gap-3">
-            <button id="skipBtn" class="px-6 py-2.5 text-xs font-bold text-slate-400 border border-slate-600 rounded-full hover:bg-slate-700 transition">SKIP</button>
-            <button id="cropConfirmBtn" class="px-10 py-2.5 bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-700 shadow-lg transition">APPLY & NEXT</button>
-          </div>
+      <div class="p-4 bg-slate-800 border-t border-slate-700 flex justify-between items-center">
+        <div class="flex gap-1">
+          <button class="ratio-btn px-3 py-1 bg-indigo-600 text-[10px] rounded" data-ratio="NaN">Free</button>
+          <button class="ratio-btn px-3 py-1 bg-slate-700 text-[10px] rounded" data-ratio="1">1:1</button>
+        </div>
+        <div class="flex gap-2">
+          <button id="skipBtn" class="px-4 py-2 text-[10px] text-slate-400">SKIP</button>
+          <button id="cropConfirmBtn" class="px-8 py-2 bg-indigo-600 rounded-full text-[10px] font-bold">決定して次へ</button>
         </div>
       </div>
     </div>
@@ -70,143 +58,140 @@
       initializeImageMagick, 
       MagickFormat, 
       MagickColor,
-      MagickGeometry
+      MagickGeometry,
+      MagickImageCollection
     } from 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/index.js';
 
-    const logPanel = document.getElementById('debugLog');
-    function log(msg, type = 'info') {
-      const colors = { info: 'text-green-400', warn: 'text-yellow-400', err: 'text-red-500', debug: 'text-blue-400' };
-      logPanel.innerHTML += `> <span class="${colors[type]}">${msg}</span><br>`;
-      logPanel.scrollTop = logPanel.scrollHeight;
-    }
+    const log = (msg, type='info') => {
+      const el = document.getElementById('debugLog');
+      const colors = { info:'text-green-400', err:'text-red-500', debug:'text-blue-400' };
+      el.innerHTML += `> <span class="${colors[type]}">${msg}</span><br>`;
+      el.scrollTop = el.scrollHeight;
+    };
 
-    async function initApp() {
+    async function init() {
       try {
         const resp = await fetch('https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/magick.wasm');
         await initializeImageMagick(new Uint8Array(await resp.arrayBuffer()));
-        log("Engine initialized. Ready for processing.");
+        log("Engine Ready.");
         document.getElementById('imageInput').disabled = false;
-      } catch (err) { log("Init Failed: " + err.message, "err"); }
+        document.getElementById('uploadText').innerText = "画像を選択 (複数可)";
+      } catch(e) { log("Engine Init Error", "err"); }
     }
 
     let queue = [], index = 0, zip = null, cropper = null;
 
-    document.getElementById('imageInput').addEventListener('change', (e) => {
+    document.getElementById('imageInput').onchange = (e) => {
       queue = Array.from(e.target.files);
-      if (!queue.length) return;
+      if(!queue.length) return;
       index = 0; zip = new JSZip();
       document.getElementById('outputArea').innerHTML = '';
       processNext();
-    });
+    };
+
+    // ファイルから「最大の画像（メイン画像）」を選択する関数
+    function findMainImage(images) {
+      let main = images[0];
+      let maxArea = main.width * main.height;
+      images.forEach(img => {
+        const area = img.width * img.height;
+        if(area > maxArea) {
+          maxArea = area;
+          main = img;
+        }
+      });
+      return main;
+    }
 
     async function processNext() {
-      if (index >= queue.length) {
-        closeModal();
-        if (document.getElementById('outputArea').childElementCount > 0) document.getElementById('zipArea').classList.remove('hidden');
+      if(index >= queue.length) {
+        document.getElementById('cropModal').classList.add('hidden');
+        if(document.getElementById('outputArea').childElementCount > 0) document.getElementById('zipArea').classList.remove('hidden');
         return;
       }
 
       const file = queue[index];
-      openModal(file.name, index + 1, queue.length);
+      document.getElementById('cropModal').classList.remove('hidden');
+      document.getElementById('modalTitle').innerText = file.name;
+      document.getElementById('queueInfo').innerText = `${index+1}/${queue.length}`;
+      document.getElementById('modalLoading').classList.remove('hidden');
 
       try {
         const bytes = new Uint8Array(await file.arrayBuffer());
         
-        // プレビュー生成（1枚目のメイン画像のみを抽出するようにガードをかける）
-        const pngBlob = await new Promise((res, rej) => {
-          let processed = false;
-          ImageMagick.read(bytes, img => {
-            if (processed) return; // 2枚目（サムネイル等）以降は無視
-            processed = true;
+        // Collectionとして読み込み、全フレームをチェック
+        MagickImageCollection.read(bytes, (images) => {
+          const mainImg = findMainImage(images); // 最も大きい画像を選ぶ
+          mainImg.autoOrient();
+          mainImg.page = new MagickGeometry(0, 0, mainImg.width, mainImg.height);
+          
+          log(`Main Frame: ${mainImg.width}x${mainImg.height}`, "debug");
 
-            img.autoOrient();
-            img.page = new MagickGeometry(0, 0, img.width, img.height); // キャンバスリセット
-            log(`Previewing Main Image: ${img.width}x${img.height}`);
-            img.write(data => res(new Blob([data], {type:'image/png'})));
-          });
-          setTimeout(() => { if(!processed) rej("Timeout: 画像が読み込めません"); }, 5000);
+          mainImg.write(data => {
+            const url = URL.createObjectURL(new Blob([data], {type:'image/png'}));
+            const imgEl = document.getElementById('editingImage');
+            imgEl.src = url;
+            imgEl.onload = () => {
+              document.getElementById('modalLoading').classList.add('hidden');
+              if(cropper) cropper.destroy();
+              cropper = new Cropper(imgEl, { viewMode: 1, autoCropArea: 0.8 });
+            };
+          }, MagickFormat.Png);
         });
-
-        const imgEl = document.getElementById('editingImage');
-        imgEl.src = URL.createObjectURL(pngBlob);
-        imgEl.onload = () => {
-          document.getElementById('modalLoading').classList.add('hidden');
-          if(cropper) cropper.destroy();
-          cropper = new Cropper(imgEl, { viewMode: 1, autoCropArea: 0.8 });
-        };
-      } catch (e) { 
-        log(`Error loading ${file.name}: ${e}`, "err"); 
-        index++; processNext(); 
-      }
+      } catch(e) { log(`Load Error: ${e.message}`, "err"); index++; processNext(); }
     }
 
     document.getElementById('cropConfirmBtn').onclick = async () => {
-      if (!cropper) return;
+      if(!cropper) return;
       const file = queue[index];
-      const data = cropper.getData({ rounded: true }); 
-      
+      const crop = cropper.getData({ rounded: true });
       document.getElementById('modalLoading').classList.remove('hidden');
-      document.getElementById('loadingMsg').innerText = "Generating JPG...";
 
       try {
         const bytes = new Uint8Array(await file.arrayBuffer());
-        const jpgBlob = await new Promise((res, rej) => {
-          let processed = false;
-          ImageMagick.read(bytes, img => {
-            if (processed) return; 
-            processed = true;
+        
+        await MagickImageCollection.read(bytes, async (images) => {
+          const img = findMainImage(images);
+          img.autoOrient();
+          img.page = new MagickGeometry(0, 0, img.width, img.height);
 
-            try {
-              img.autoOrient();
-              img.page = new MagickGeometry(0, 0, img.width, img.height);
+          // 文字列によるGeometry指定で誤動作を防止 "widthxheight+x+y"
+          const geoStr = `${crop.width}x${crop.height}+${Math.max(0, crop.x)}+${Math.max(0, crop.y)}`;
+          log(`Executing: img.crop("${geoStr}")`);
+          
+          img.crop(new MagickGeometry(geoStr));
+          img.page = new MagickGeometry(0, 0, img.width, img.height); // 切り抜き後の再設定
 
-              // クロップ実行 (w, h, x, y)
-              const cropGeom = new MagickGeometry(data.width, data.height, Math.max(0, data.x), Math.max(0, data.y));
-              img.crop(cropGeom);
+          img.backgroundColor = new MagickColor("white");
+          try { img.alpha(11); } catch(e){}
 
-              // クロップ後のキャンバスリセット（これがないとJPGに余白情報が残る）
-              img.page = new MagickGeometry(0, 0, img.width, img.height);
+          img.format = MagickFormat.Jpeg;
+          img.quality = 90;
 
-              // 透過処理 & 背景白
-              img.backgroundColor = new MagickColor("white");
-              try { img.alpha(11); } catch(e){}
-
-              img.format = MagickFormat.Jpeg;
-              img.quality = 90;
-              img.write(data => res(new Blob([data], {type:'image/jpeg'})));
-              log(`Cropped: ${img.width}x${img.height} at (${data.x}, ${data.y})`);
-            } catch(e) { rej(e); }
+          img.write(data => {
+            const blob = new Blob([data], {type:'image/jpeg'});
+            const url = URL.createObjectURL(blob);
+            const name = file.name.replace(/\.[^/.]+$/, "") + "_edit.jpg";
+            zip.file(name, blob);
+            
+            const div = document.createElement('div');
+            div.className = "bg-slate-800 p-1 border border-slate-700 rounded text-center shadow-xl";
+            div.innerHTML = `<img src="${url}" class="h-16 w-full object-contain bg-black mb-1"><a href="${url}" download="${name}" class="text-[8px] text-indigo-400 font-bold uppercase">Save</a>`;
+            document.getElementById('outputArea').appendChild(div);
+            
+            log(`Success: ${name} (${img.width}x${img.height})`);
+            index++;
+            processNext();
           });
         });
-
-        const newName = file.name.replace(/\.[^/.]+$/, "") + "_cropped.jpg";
-        zip.file(newName, jpgBlob);
-        addCard(URL.createObjectURL(jpgBlob), newName);
-        index++; processNext();
-      } catch (e) {
-        log(`Crop Error: ${e.message}`, "err");
-        document.getElementById('modalLoading').classList.add('hidden');
-      }
+      } catch(e) { log(`Crop Error: ${e.message}`, "err"); document.getElementById('modalLoading').classList.add('hidden'); }
     };
 
-    function openModal(name, cur, total) {
-      document.getElementById('cropModal').classList.remove('hidden');
-      document.getElementById('modalTitle').innerText = name;
-      document.getElementById('queueInfo').innerText = `${cur} / ${total}`;
-      document.getElementById('modalLoading').classList.remove('hidden');
-    }
-    function closeModal() { document.getElementById('cropModal').classList.add('hidden'); }
-    function addCard(url, name) {
-      const div = document.createElement('div');
-      div.className = "bg-slate-800 p-2 border border-slate-700 rounded-lg text-center shadow-md";
-      div.innerHTML = `<img src="${url}" class="h-20 w-full object-contain mb-1 bg-black rounded"><p class="text-[8px] truncate text-slate-500 mb-1 font-mono">${name}</p><a href="${url}" download="${name}" class="text-[9px] text-indigo-400 font-bold hover:text-indigo-300">DOWNLOAD</a>`;
-      document.getElementById('outputArea').appendChild(div);
-    }
     document.querySelectorAll('.ratio-btn').forEach(b => {
       b.onclick = (e) => {
         cropper.setAspectRatio(parseFloat(e.target.dataset.ratio));
-        document.querySelectorAll('.ratio-btn').forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white'));
-        e.target.classList.add('bg-indigo-600', 'text-white');
+        document.querySelectorAll('.ratio-btn').forEach(btn => btn.classList.replace('bg-indigo-600', 'bg-slate-700'));
+        e.target.classList.replace('bg-slate-700', 'bg-indigo-600');
       };
     });
     document.getElementById('skipBtn').onclick = () => { index++; processNext(); };
@@ -214,11 +199,11 @@
       const content = await zip.generateAsync({type:"blob"});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(content);
-      a.download = "images_fixed.zip";
+      a.download = "images.zip";
       a.click();
     };
 
-    initApp();
+    init();
   </script>
 </body>
 </html>
