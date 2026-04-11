@@ -3,93 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Universal Image Editor (Crop & Convert)</title>
+  <title>Universal Image Editor Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-  <style>
-    /* Cropper用のスタイル調整 */
-    .cropper-view-box, .cropper-face { border-radius: 0; }
-    /* フェードインアニメーション */
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .animate-fadeIn { animation: fadeIn 0.3s ease-in-out; }
-  </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-  <div class="p-4 md:p-8">
-    <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden p-6 md:p-8">
+  <div class="p-4 md:p-8 max-w-5xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+      
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">画像切り抜き＆JPG変換</h1>
-        <p class="text-gray-500 text-sm">.j2, .heic, .psdなどあらゆる形式に対応。範囲を選んでJPGにします。</p>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">画像切り抜き＆JPG一括変換</h1>
+        <p class="text-gray-500 text-sm">.j2, .heic, .psd, .tiff対応 | ブラウザ完結型</p>
       </div>
 
-      <div class="flex items-center justify-center w-full mb-8">
-        <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-blue-300 border-dashed rounded-xl cursor-not-allowed bg-gray-50 transition duration-300">
-          <div id="uploadUI" class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
-            <svg id="uploadIcon" class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-            <p id="uploadText" class="text-sm text-gray-700">
-              <span class="font-bold text-orange-600 block mb-1">エンジン読み込み中...</span>
-              <span class="text-xs text-gray-500">WASMファイルをフェッチしています (約14MB)</span>
-            </p>
+      <div id="debugLog" class="mb-6 p-3 bg-gray-900 rounded-lg text-green-400 font-mono text-xs overflow-y-auto max-h-32 shadow-inner">
+        > システム起動中...<br>
+      </div>
+
+      <div class="mb-8">
+        <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-40 border-2 border-blue-300 border-dashed rounded-xl cursor-not-allowed bg-gray-50 transition-all duration-300">
+          <div id="uploadUI" class="flex flex-col items-center justify-center text-center px-4">
+            <svg id="uploadIcon" class="w-12 h-12 mb-3 text-gray-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <p id="uploadText" class="text-sm text-gray-700 font-medium leading-relaxed">エンジン準備中...<br><span class="text-xs text-gray-400">WASMファイルを読み込んでいます</span></p>
           </div>
           <input id="imageInput" type="file" multiple accept="image/*,.j2,.jp2,.heic,.tiff,.psd,.webp" class="hidden" disabled />
         </label>
       </div>
 
-      <div id="globalStatus" class="text-center text-gray-600 mb-6 hidden font-medium p-3 bg-blue-50 rounded-lg animate-fadeIn"></div>
-
-      <div id="zipArea" class="text-center mb-8 hidden animate-fadeIn">
+      <div id="zipArea" class="text-center mb-8 hidden">
         <button id="downloadZipBtn" class="px-8 py-3 bg-green-600 text-white font-bold rounded-full hover:bg-green-700 transition shadow-lg flex items-center justify-center mx-auto text-lg">
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-          処理済み画像をすべてZIPで保存
+          一括保存 (ZIP)
         </button>
       </div>
 
-      <div id="outputArea" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6"></div>
+      <div id="outputArea" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
     </div>
   </div>
 
-  <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-85 z-50 flex items-center justify-center hidden p-4 transition-opacity duration-300 opacity-0">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden animate-fadeIn">
-      
-      <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-        <h2 id="modalTitle" class="text-xl font-bold text-gray-800 truncate">画像を編集</h2>
-        <div class="flex items-center gap-2">
-          <span id="queueProgress" class="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">1 / 1</span>
-          <button id="cancelBtn" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
+  <div id="cropModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center hidden p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden scale-95 transition-transform duration-300" id="modalContent">
+      <div class="px-6 py-4 border-b flex items-center justify-between bg-gray-50">
+        <h2 id="modalTitle" class="font-bold text-gray-700 truncate">画像を切り抜き</h2>
+        <span id="queueInfo" class="text-xs font-bold bg-blue-100 text-blue-600 px-3 py-1 rounded-full">1 / 1</span>
+      </div>
+      <div class="flex-grow p-4 bg-gray-800 flex items-center justify-center relative min-h-[40vh]">
+        <img id="editingImage" class="max-w-full max-h-full block">
+        <div id="modalLoading" class="absolute inset-0 bg-gray-900/80 flex flex-col items-center justify-center text-white">
+          <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p class="text-sm font-bold">デコード中...</p>
         </div>
       </div>
-
-      <div class="flex-grow p-4 bg-gray-900 flex items-center justify-center overflow-hidden min-h-[50vh]">
-        <div id="modalLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 bg-opacity-90 z-10 text-white">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
-          <p class="text-sm font-medium">画像を展開中...</p>
-          <p class="text-xs text-gray-400 mt-1">(.j2形式などは時間がかかります)</p>
-        </div>
-        <div class="w-full h-full flex items-center justify-center">
-          <img id="editingImage" class="max-w-full max-h-full block">
-        </div>
-      </div>
-
-      <div class="px-6 py-5 border-t border-gray-200 bg-white">
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div class="flex items-center gap-2 border border-gray-200 rounded-full p-1 bg-gray-50">
-            <span class="text-xs font-bold text-gray-500 px-3">比率:</span>
-            <button class="ratio-btn px-4 py-1.5 text-sm rounded-full bg-blue-600 text-white font-medium" data-ratio="NaN">フリー</button>
-            <button class="ratio-btn px-4 py-1.5 text-sm rounded-full text-gray-700 hover:bg-gray-100" data-ratio="1.7777777777777777">16:9</button>
-            <button class="ratio-btn px-4 py-1.5 text-sm rounded-full text-gray-700 hover:bg-gray-100" data-ratio="1.3333333333333333">4:3</button>
-            <button class="ratio-btn px-4 py-1.5 text-sm rounded-full text-gray-700 hover:bg-gray-100" data-ratio="1">1:1</button>
+      <div class="p-6 border-t bg-white">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
+            <button class="ratio-btn px-4 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm" data-ratio="NaN">フリー</button>
+            <button class="ratio-btn px-4 py-1.5 text-xs font-bold rounded-md text-gray-600" data-ratio="1.77777777">16:9</button>
+            <button class="ratio-btn px-4 py-1.5 text-xs font-bold rounded-md text-gray-600" data-ratio="1.33333333">4:3</button>
+            <button class="ratio-btn px-4 py-1.5 text-xs font-bold rounded-md text-gray-600" data-ratio="1">1:1</button>
           </div>
-          <div class="flex items-center gap-3 w-full sm:w-auto">
-            <button id="skipBtn" class="flex-1 sm:flex-none px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-full hover:bg-gray-50 transition">この画像をスキップ</button>
-            <button id="cropConfirmBtn" class="flex-1 sm:flex-none px-10 py-3 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition shadow-md flex items-center justify-center">
-              <span id="confirmText">切り抜いてJPGに変換</span>
-              <div id="confirmSpinner" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white ml-2 hidden"></div>
-            </button>
+          <div class="flex gap-3 w-full sm:w-auto">
+            <button id="skipBtn" class="flex-1 px-6 py-2.5 text-sm font-bold text-gray-500 border rounded-full hover:bg-gray-50">スキップ</button>
+            <button id="cropConfirmBtn" class="flex-1 px-8 py-2.5 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 shadow-md">決定して変換</button>
           </div>
         </div>
       </div>
@@ -97,52 +75,200 @@
   </div>
 
   <script type="module">
-    import { ImageMagick, initializeImageMagick, MagickFormat, MagickColor, AlphaOption, Gravity } from 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/index.js';
+    // --- ログ出力関数 ---
+    function log(msg, isError = false) {
+      const panel = document.getElementById('debugLog');
+      const time = new Date().toLocaleTimeString();
+      panel.innerHTML += `<span class="${isError ? 'text-red-500' : ''}">[${time}] ${msg}</span><br>`;
+      panel.scrollTop = panel.scrollHeight;
+    }
 
-    // DOM要素の取得
-    const imageInput = document.getElementById('imageInput');
-    const dropZone = document.getElementById('dropZone');
-    const uploadText = document.getElementById('uploadText');
-    const globalStatus = document.getElementById('globalStatus');
-    const outputArea = document.getElementById('outputArea');
-    const zipArea = document.getElementById('zipArea');
-    const downloadZipBtn = document.getElementById('downloadZipBtn');
-
-    // モダル要素
-    const cropModal = document.getElementById('cropModal');
-    const editingImage = document.getElementById('editingImage');
-    const modalTitle = document.getElementById('modalTitle');
-    const queueProgress = document.getElementById('queueProgress');
-    const modalLoading = document.getElementById('modalLoading');
-    const cropConfirmBtn = document.getElementById('cropConfirmBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const skipBtn = document.getElementById('skipBtn');
-
-    // アプリケーションの状態
-    let currentZip = null;
-    let fileQueue = []; // 順番待ちのファイル
-    let currentFileIndex = 0;
-    let cropperInstance = null; // Cropperのインスタンス
-    let isModalProcessing = false; // モーダル内で処理中か
-
-    // --- 1. WASMエンジンのロード (Empty Buffer対策) ---
-    async function bootWasm() {
+    // --- メイン処理 ---
+    async function initApp() {
+      const libUrl = 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/index.js';
       const wasmUrl = 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/magick.wasm';
+
       try {
-        console.log("WASMロード開始...");
+        log("ライブラリ(JS)をインポート中...");
+        // 動的インポートにより、ネットワークタブに index.js が出るはずです
+        const MagickLib = await import(libUrl);
+        const { ImageMagick, initializeImageMagick, MagickFormat, MagickColor, AlphaOption } = MagickLib;
+        log("JSインポート成功。WASMフェッチ開始...");
+
+        // WASMの手動フェッチ (Networkタブに必ず出る)
         const resp = await fetch(wasmUrl);
-        if (!resp.ok) throw new Error("WASMフェッチ失敗");
-        const buf = await resp.arrayBuffer();
-        if (buf.byteLength === 0) throw new Error("WASMデータが空です");
-        await initializeImageMagick(new Uint8Array(buf));
-        console.log("Magick.WASM 準備完了");
-        enableMainUI();
+        if (!resp.ok) throw new Error("WASMのダウンロードに失敗しました。");
+        
+        const reader = resp.body.getReader();
+        let loaded = 0;
+        const total = parseInt(resp.headers.get('content-length') || "0");
+        const chunks = [];
+
+        while(true) {
+          const {done, value} = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          loaded += value.length;
+          const pct = total ? Math.round((loaded/total)*100) : "?";
+          document.getElementById('uploadText').innerText = `WASMダウンロード中: ${pct}%`;
+        }
+
+        const wasmBytes = new Uint8Array(loaded);
+        let pos = 0;
+        for (const chunk of chunks) {
+          wasmBytes.set(chunk, pos);
+          pos += chunk.length;
+        }
+
+        log(`WASMダウンロード完了 (${(loaded/1024/1024).toFixed(1)}MB)`);
+        await initializeImageMagick(wasmBytes);
+        log("エンジン初期化完了。UIを解放します。");
+
+        startApp(MagickLib);
+
       } catch (err) {
-        console.error("起動エラー:", err);
-        uploadText.innerHTML = `<span class="text-red-500 font-bold text-lg">起動失敗</span><br><span class="text-xs text-gray-400">${err.message}</span>`;
+        log(`致命的エラー: ${err.message}`, true);
+        document.getElementById('uploadText').innerHTML = `<span class="text-red-500 font-bold">起動失敗</span><br>${err.message}`;
       }
     }
 
-    function enableMainUI() {
-      imageInput.disabled = false;
-      dropZone.classList.remove('cursor-not-allowed', 'bg
+    function startApp(Magick) {
+      const { ImageMagick, MagickFormat, MagickColor, AlphaOption } = Magick;
+      
+      // UI解放
+      const input = document.getElementById('imageInput');
+      const dropZone = document.getElementById('dropZone');
+      input.disabled = false;
+      dropZone.classList.replace('cursor-not-allowed', 'cursor-pointer');
+      dropZone.classList.replace('bg-gray-100', 'bg-blue-50');
+      document.getElementById('uploadIcon').classList.remove('animate-pulse', 'text-gray-400');
+      document.getElementById('uploadIcon').classList.add('text-blue-500');
+      document.getElementById('uploadText').innerHTML = '<span class="text-blue-600 font-bold text-lg">準備完了！</span><br>画像を選んでください';
+
+      let queue = [];
+      let index = 0;
+      let zip = null;
+      let cropper = null;
+
+      input.addEventListener('change', (e) => {
+        queue = Array.from(e.target.files);
+        if (!queue.length) return;
+        index = 0;
+        zip = new JSZip();
+        document.getElementById('outputArea').innerHTML = '';
+        document.getElementById('zipArea').classList.add('hidden');
+        processNext();
+      });
+
+      async function processNext() {
+        if (index >= queue.length) {
+          closeModal();
+          if (document.getElementById('outputArea').childElementCount > 1) {
+            document.getElementById('zipArea').classList.remove('hidden');
+          }
+          return;
+        }
+
+        const file = queue[index];
+        openModal(file.name, index + 1, queue.length);
+
+        try {
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          
+          // プレビュー用PNG作成
+          const pngBlob = await new Promise((res, rej) => {
+            ImageMagick.read(bytes, img => {
+              img.write(data => res(new Blob([data], {type:'image/png'})));
+            });
+          });
+
+          const url = URL.createObjectURL(pngBlob);
+          const imgEl = document.getElementById('editingImage');
+          imgEl.src = url;
+          imgEl.onload = () => {
+            document.getElementById('modalLoading').classList.add('hidden');
+            if(cropper) cropper.destroy();
+            cropper = new Cropper(imgEl, { viewMode: 1, autoCropArea: 0.8 });
+          };
+        } catch (e) {
+          log(`ファイル読み込みエラー: ${file.name}`, true);
+          index++; processNext();
+        }
+      }
+
+      document.getElementById('cropConfirmBtn').onclick = async () => {
+        if (!cropper) return;
+        const file = queue[index];
+        const cropData = cropper.getData({ rounded: true });
+        
+        document.getElementById('modalLoading').classList.remove('hidden');
+
+        try {
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          const jpgBlob = await new Promise(res => {
+            ImageMagick.read(bytes, img => {
+              img.backgroundColor = new MagickColor("white");
+              img.alpha(AlphaOption.Remove);
+              img.crop(cropData.width, cropData.height, cropData.x, cropData.y);
+              img.format = MagickFormat.Jpeg;
+              img.quality = 85;
+              img.write(data => res(new Blob([data], {type:'image/jpeg'})));
+            });
+          });
+
+          const newName = file.name.replace(/\.[^/.]+$/, "") + "_cropped.jpg";
+          zip.file(newName, jpgBlob);
+          addCard(URL.createObjectURL(jpgBlob), newName);
+          
+          index++;
+          processNext();
+        } catch (e) {
+          alert("変換に失敗しました");
+          document.getElementById('modalLoading').classList.add('hidden');
+        }
+      };
+
+      document.getElementById('skipBtn').onclick = () => { index++; processNext(); };
+      
+      document.querySelectorAll('.ratio-btn').forEach(b => {
+        b.onclick = (e) => {
+          cropper.setAspectRatio(parseFloat(e.target.dataset.ratio));
+          document.querySelectorAll('.ratio-btn').forEach(btn => btn.classList.remove('bg-white', 'shadow-sm'));
+          e.target.classList.add('bg-white', 'shadow-sm');
+        };
+      });
+
+      document.getElementById('downloadZipBtn').onclick = async () => {
+        const content = await zip.generateAsync({type:"blob"});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content);
+        a.download = "images.zip";
+        a.click();
+      };
+    }
+
+    function openModal(name, cur, total) {
+      document.getElementById('cropModal').classList.remove('hidden');
+      document.getElementById('modalLoading').classList.remove('hidden');
+      document.getElementById('modalTitle').innerText = name;
+      document.getElementById('queueInfo').innerText = `${cur} / ${total}`;
+      setTimeout(() => document.getElementById('modalContent').classList.replace('scale-95', 'scale-100'), 10);
+    }
+
+    function closeModal() {
+      document.getElementById('modalContent').classList.replace('scale-100', 'scale-95');
+      setTimeout(() => document.getElementById('cropModal').classList.add('hidden'), 200);
+    }
+
+    function addCard(url, name) {
+      const area = document.getElementById('outputArea');
+      const div = document.createElement('div');
+      div.className = "bg-white p-2 border rounded-xl shadow-sm";
+      div.innerHTML = `<img src="${url}" class="w-full h-24 object-contain mb-2"><p class="text-[10px] truncate mb-2 text-center text-gray-400">${name}</p><a href="${url}" download="${name}" class="block text-center text-xs font-bold text-blue-500 py-1 bg-blue-50 rounded-lg">保存</a>`;
+      area.appendChild(div);
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
