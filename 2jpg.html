@@ -3,183 +3,146 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Universal Image to JPG Converter</title>
+  <title>Universal Image Editor (Crop & Convert)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+  <style>
+    /* Cropper用のスタイル調整 */
+    .cropper-view-box, .cropper-face { border-radius: 0; }
+    /* フェードインアニメーション */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .animate-fadeIn { animation: fadeIn 0.3s ease-in-out; }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 md:p-8">
-  <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 md:p-8">
-    <div class="text-center mb-8">
-      <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">あらゆる画像をJPGに一括変換</h1>
-      <p class="text-gray-500 text-sm">.j2, .heic, .tiff, .psd 等に対応。ブラウザ上で安全に処理されます。</p>
-    </div>
+<body class="bg-gray-100 min-h-screen">
 
-    <div class="flex items-center justify-center w-full mb-6">
-      <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-40 border-2 border-blue-300 border-dashed rounded-lg cursor-not-allowed bg-gray-100 transition duration-300">
-        <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
-          <svg id="uploadIcon" class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-          <p id="uploadText" class="text-sm text-gray-700">
-            <span class="font-bold text-orange-600 block mb-1">エンジン読み込み中...</span>
-            <span id="loadingProgress" class="text-xs text-gray-500">WASMファイルをダウンロードしています (約14MB)</span>
-          </p>
+  <div class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden p-6 md:p-8">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">画像切り抜き＆JPG変換</h1>
+        <p class="text-gray-500 text-sm">.j2, .heic, .psdなどあらゆる形式に対応。範囲を選んでJPGにします。</p>
+      </div>
+
+      <div class="flex items-center justify-center w-full mb-8">
+        <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-blue-300 border-dashed rounded-xl cursor-not-allowed bg-gray-50 transition duration-300">
+          <div id="uploadUI" class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
+            <svg id="uploadIcon" class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <p id="uploadText" class="text-sm text-gray-700">
+              <span class="font-bold text-orange-600 block mb-1">エンジン読み込み中...</span>
+              <span class="text-xs text-gray-500">WASMファイルをフェッチしています (約14MB)</span>
+            </p>
+          </div>
+          <input id="imageInput" type="file" multiple accept="image/*,.j2,.jp2,.heic,.tiff,.psd,.webp" class="hidden" disabled />
+        </label>
+      </div>
+
+      <div id="globalStatus" class="text-center text-gray-600 mb-6 hidden font-medium p-3 bg-blue-50 rounded-lg animate-fadeIn"></div>
+
+      <div id="zipArea" class="text-center mb-8 hidden animate-fadeIn">
+        <button id="downloadZipBtn" class="px-8 py-3 bg-green-600 text-white font-bold rounded-full hover:bg-green-700 transition shadow-lg flex items-center justify-center mx-auto text-lg">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          処理済み画像をすべてZIPで保存
+        </button>
+      </div>
+
+      <div id="outputArea" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6"></div>
+    </div>
+  </div>
+
+  <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-85 z-50 flex items-center justify-center hidden p-4 transition-opacity duration-300 opacity-0">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden animate-fadeIn">
+      
+      <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <h2 id="modalTitle" class="text-xl font-bold text-gray-800 truncate">画像を編集</h2>
+        <div class="flex items-center gap-2">
+          <span id="queueProgress" class="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">1 / 1</span>
+          <button id="cancelBtn" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
         </div>
-        <input id="imageInput" type="file" multiple accept="image/*,.j2,.jp2,.heic,.tiff,.psd,.webp" class="hidden" disabled />
-      </label>
+      </div>
+
+      <div class="flex-grow p-4 bg-gray-900 flex items-center justify-center overflow-hidden min-h-[50vh]">
+        <div id="modalLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 bg-opacity-90 z-10 text-white">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
+          <p class="text-sm font-medium">画像を展開中...</p>
+          <p class="text-xs text-gray-400 mt-1">(.j2形式などは時間がかかります)</p>
+        </div>
+        <div class="w-full h-full flex items-center justify-center">
+          <img id="editingImage" class="max-w-full max-h-full block">
+        </div>
+      </div>
+
+      <div class="px-6 py-5 border-t border-gray-200 bg-white">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-2 border border-gray-200 rounded-full p-1 bg-gray-50">
+            <span class="text-xs font-bold text-gray-500 px-3">比率:</span>
+            <button class="ratio-btn px-4 py-1.5 text-sm rounded-full bg-blue-600 text-white font-medium" data-ratio="NaN">フリー</button>
+            <button class="ratio-btn px-4 py-1.5 text-sm rounded-full text-gray-700 hover:bg-gray-100" data-ratio="1.7777777777777777">16:9</button>
+            <button class="ratio-btn px-4 py-1.5 text-sm rounded-full text-gray-700 hover:bg-gray-100" data-ratio="1.3333333333333333">4:3</button>
+            <button class="ratio-btn px-4 py-1.5 text-sm rounded-full text-gray-700 hover:bg-gray-100" data-ratio="1">1:1</button>
+          </div>
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <button id="skipBtn" class="flex-1 sm:flex-none px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-full hover:bg-gray-50 transition">この画像をスキップ</button>
+            <button id="cropConfirmBtn" class="flex-1 sm:flex-none px-10 py-3 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition shadow-md flex items-center justify-center">
+              <span id="confirmText">切り抜いてJPGに変換</span>
+              <div id="confirmSpinner" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white ml-2 hidden"></div>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <div id="status" class="text-center text-blue-600 font-semibold mb-4 hidden"></div>
-
-    <div id="zipDownloadArea" class="text-center mb-8 hidden">
-      <button id="downloadZipBtn" class="px-8 py-3 bg-green-600 text-white font-bold rounded-full hover:bg-green-700 transition shadow-lg flex items-center justify-center mx-auto">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-        すべての画像をZIPで保存
-      </button>
-      <p id="zipStatus" class="text-sm text-gray-500 mt-2 hidden">ZIP生成中...</p>
-    </div>
-
-    <div id="outputArea" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
   </div>
 
   <script type="module">
-    // index.js を使用 (404対策)
-    import { ImageMagick, initializeImageMagick, MagickFormat } from 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/index.js';
+    import { ImageMagick, initializeImageMagick, MagickFormat, MagickColor, AlphaOption, Gravity } from 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/index.js';
 
+    // DOM要素の取得
     const imageInput = document.getElementById('imageInput');
     const dropZone = document.getElementById('dropZone');
     const uploadText = document.getElementById('uploadText');
-    const statusDiv = document.getElementById('status');
+    const globalStatus = document.getElementById('globalStatus');
     const outputArea = document.getElementById('outputArea');
-    const zipDownloadArea = document.getElementById('zipDownloadArea');
+    const zipArea = document.getElementById('zipArea');
     const downloadZipBtn = document.getElementById('downloadZipBtn');
-    const loadingProgress = document.getElementById('loadingProgress');
 
+    // モダル要素
+    const cropModal = document.getElementById('cropModal');
+    const editingImage = document.getElementById('editingImage');
+    const modalTitle = document.getElementById('modalTitle');
+    const queueProgress = document.getElementById('queueProgress');
+    const modalLoading = document.getElementById('modalLoading');
+    const cropConfirmBtn = document.getElementById('cropConfirmBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const skipBtn = document.getElementById('skipBtn');
+
+    // アプリケーションの状態
     let currentZip = null;
-    let isProcessing = false;
+    let fileQueue = []; // 順番待ちのファイル
+    let currentFileIndex = 0;
+    let cropperInstance = null; // Cropperのインスタンス
+    let isModalProcessing = false; // モーダル内で処理中か
 
-    // --- 1. エンジンの手動ダウンロードと初期化 (Empty Buffer対策) ---
-    async function bootMagick() {
+    // --- 1. WASMエンジンのロード (Empty Buffer対策) ---
+    async function bootWasm() {
       const wasmUrl = 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/magick.wasm';
-      
       try {
-        console.log("WASMのフェッチを開始...");
-        const response = await fetch(wasmUrl);
-        
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
-        // ArrayBufferとして取得
-        const wasmBuffer = await response.arrayBuffer();
-        console.log(`WASMダウンロード完了: ${wasmBuffer.byteLength} bytes`);
-
-        if (wasmBuffer.byteLength === 0) throw new Error("WASMファイルが空です。");
-
-        // 初期化実行 (Uint8Arrayを渡す)
-        await initializeImageMagick(new Uint8Array(wasmBuffer));
-        
+        console.log("WASMロード開始...");
+        const resp = await fetch(wasmUrl);
+        if (!resp.ok) throw new Error("WASMフェッチ失敗");
+        const buf = await resp.arrayBuffer();
+        if (buf.byteLength === 0) throw new Error("WASMデータが空です");
+        await initializeImageMagick(new Uint8Array(buf));
         console.log("Magick.WASM 準備完了");
-        enableUI();
+        enableMainUI();
       } catch (err) {
-        console.error("起動に失敗しました:", err);
-        uploadText.innerHTML = `<span class="text-red-500 font-bold text-lg">エラーが発生しました</span><br><span class="text-xs text-gray-400">${err.message}</span>`;
+        console.error("起動エラー:", err);
+        uploadText.innerHTML = `<span class="text-red-500 font-bold text-lg">起動失敗</span><br><span class="text-xs text-gray-400">${err.message}</span>`;
       }
     }
 
-    function enableUI() {
+    function enableMainUI() {
       imageInput.disabled = false;
-      dropZone.classList.remove('cursor-not-allowed', 'bg-gray-100');
-      dropZone.classList.add('cursor-pointer', 'bg-blue-50', 'hover:bg-blue-100');
-      document.getElementById('uploadIcon').classList.replace('text-gray-400', 'text-blue-500');
-      uploadText.innerHTML = '<span class="font-bold text-blue-600 text-lg text-center">準備完了！</span><br>クリックして画像を選択、またはドラッグ＆ドロップ';
-    }
-
-    // 起動！
-    bootMagick();
-
-    // --- 2. 変換ロジック ---
-    imageInput.addEventListener('change', async (e) => {
-      const files = Array.from(e.target.files);
-      if (files.length === 0 || isProcessing) return;
-
-      isProcessing = true;
-      imageInput.disabled = true;
-      statusDiv.classList.remove('hidden');
-      statusDiv.className = "text-center text-blue-600 font-semibold mb-4";
-      outputArea.innerHTML = '';
-      zipDownloadArea.classList.add('hidden');
-      currentZip = new JSZip();
-
-      try {
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          statusDiv.innerText = `[${i + 1} / ${files.length}] 変換中: ${file.name}`;
-          
-          // ステータス描画を促すための微小な待機
-          await new Promise(r => setTimeout(r, 50));
-
-          const arrayBuffer = await file.arrayBuffer();
-          const bytes = new Uint8Array(arrayBuffer);
-
-          // ImageMagick 読み込みと変換
-          await new Promise((resolve) => {
-            ImageMagick.read(bytes, (image) => {
-              image.format = MagickFormat.Jpeg;
-              image.quality = 85;
-
-              image.write((outData) => {
-                const blob = new Blob([outData], { type: 'image/jpeg' });
-                const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
-                
-                currentZip.file(newName, blob);
-
-                const url = URL.createObjectURL(blob);
-                addThumbnail(url, newName);
-                resolve();
-              });
-            });
-          });
-        }
-        statusDiv.innerText = "すべての処理が完了しました！";
-        statusDiv.className = "text-center text-green-600 font-semibold mb-4";
-        if (files.length > 1) zipDownloadArea.classList.remove('hidden');
-
-      } catch (err) {
-        console.error(err);
-        statusDiv.innerText = "失敗したファイルがあります: " + err.message;
-        statusDiv.className = "text-center text-red-600 font-semibold mb-4";
-      } finally {
-        isProcessing = false;
-        imageInput.disabled = false;
-        imageInput.value = "";
-      }
-    });
-
-    function addThumbnail(url, name) {
-      const div = document.createElement('div');
-      div.className = 'bg-white border rounded-lg p-3 shadow-sm flex flex-col items-center animate-fade-in';
-      div.innerHTML = `
-        <img src="${url}" class="w-full h-32 object-contain bg-gray-100 rounded mb-2 shadow-inner">
-        <p class="w-full text-center truncate text-[10px] text-gray-500 mb-2 font-mono">${name}</p>
-        <a href="${url}" download="${name}" class="w-full text-center text-xs py-1.5 bg-blue-50 border border-blue-400 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-colors duration-200">保存</a>
-      `;
-      outputArea.appendChild(div);
-    }
-
-    downloadZipBtn.addEventListener('click', async () => {
-      document.getElementById('zipStatus').classList.remove('hidden');
-      const content = await currentZip.generateAsync({ type: "blob" });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(content);
-      link.download = "converted_images_all.zip";
-      link.click();
-      document.getElementById('zipStatus').classList.add('hidden');
-    });
-  </script>
-
-  <style>
-    @keyframes fade-in {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in { animation: fade-in 0.3s ease-out; }
-  </style>
-</body>
-</html>
+      dropZone.classList.remove('cursor-not-allowed', 'bg
