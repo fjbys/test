@@ -6,9 +6,11 @@
   <title>Universal Image Converter Pro</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <script src="./lib/jszip.min.js"></script>
 
   <style>
+    /* スライダーの見た目微調整 */
     input[type='range']::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
@@ -26,18 +28,21 @@
     
     <div class="mb-10 text-center">
       <h1 class="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">画像一括コンバーター</h1>
-      <p class="text-gray-500 text-sm mb-6">解析・EXIF制御・フォーマット変換 (PNG修正済み版)</p>
+      <p class="text-gray-500 text-sm mb-6">解析・EXIF制御・フォーマット変換 (セルフホスト版)</p>
       
       <div class="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
         <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.PSD</span>
         <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.HEIC</span>
         <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.TIFF</span>
+        <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.WEBP</span>
         <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm font-mono">.TGA</span>
+        <span class="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 shadow-sm">.JPEG2000</span>
         <span class="px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-[10px] font-bold text-blue-500 shadow-sm">TO PNG/JPG</span>
       </div>
     </div>
 
     <div class="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8">
+      
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         
         <div class="space-y-4">
@@ -48,7 +53,7 @@
           </div>
           <div id="qualityBox">
             <div class="flex justify-between items-center mb-1">
-              <span class="text-[10px] font-bold text-gray-400">QUALITY (JPGのみ)</span>
+              <span class="text-[10px] font-bold text-gray-400">QUALITY</span>
               <span id="qValue" class="text-xs font-mono font-bold text-blue-600">85%</span>
             </div>
             <input id="qualityRange" type="range" min="10" max="100" value="85" class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
@@ -60,7 +65,7 @@
           <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
             <div>
               <div class="text-xs font-bold text-gray-700">EXIF情報を削除</div>
-              <div class="text-[9px] text-gray-400 mt-0.5">位置情報などを消去</div>
+              <div class="text-[9px] text-gray-400 mt-0.5">位置情報・撮影日時など</div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" id="stripExif" class="sr-only peer" checked>
@@ -72,26 +77,26 @@
         <div class="flex flex-col justify-end">
           <input id="imageInput" type="file" multiple class="hidden" accept="image/*,.heic,.psd,.tiff,.webp,.tga,.jp2" disabled />
           <label id="uploadLabel" for="imageInput" class="w-full py-4 bg-gray-300 text-white rounded-2xl text-center font-bold text-sm cursor-not-allowed transition-all shadow-lg active:scale-[0.98]">
-            エンジン準備中...
+            エンジン読み込み中...
           </label>
         </div>
       </div>
 
       <div id="debugLog" class="mb-8 p-3 bg-gray-50 rounded-xl font-mono text-[9px] text-gray-400 overflow-y-auto max-h-24 border border-gray-100">
-        > エンジン待機中...
+        > システムを初期化しています...
       </div>
 
       <div id="zipArea" class="mb-10 text-center hidden animate-bounce">
         <button id="downloadZipBtn" class="bg-gray-900 text-white px-10 py-3 rounded-full font-bold hover:bg-black transition shadow-xl text-sm">
           すべてをZIPで保存する
-        </button>
-      </div>
+        </div>
 
       <div id="outputArea" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </div>
   </div>
 
   <script type="module">
+    // ローカルのJSからインポート
     import { 
       ImageMagick, 
       initializeImageMagick, 
@@ -106,6 +111,7 @@
       el.scrollTop = el.scrollHeight;
     };
 
+    // 比率計算用
     const getGCD = (a, b) => b ? getGCD(b, a % b) : a;
     const getAspectRatio = (w, h) => {
       const common = getGCD(w, h);
@@ -115,22 +121,29 @@
     let zip = null;
     let currentFormat = 'JPG';
 
+    // 初期化処理
     async function init() {
       try {
+        debug("WASMエンジンをロード中...");
         const resp = await fetch('./lib/magick.wasm');
-        if (!resp.ok) throw new Error("magick.wasm not found");
+        if (!resp.ok) throw new Error("magick.wasm が ./lib/ 内に見つかりません。");
+        
         await initializeImageMagick(new Uint8Array(await resp.arrayBuffer()));
         
+        debug("エンジン準備完了。");
         const label = document.getElementById('uploadLabel');
         const input = document.getElementById('imageInput');
         input.disabled = false;
         label.innerText = "画像を選択して変換";
         label.classList.replace('bg-gray-300', 'bg-blue-600');
         label.classList.replace('cursor-not-allowed', 'cursor-pointer');
-        debug("Engine Ready.");
-      } catch(e) { debug("Init Error: " + e.message); }
+      } catch(e) { 
+        debug("初期化エラー: " + e.message); 
+        console.error(e);
+      }
     }
 
+    // UIイベント
     const btnJpg = document.getElementById('setJpg');
     const btnPng = document.getElementById('setPng');
     
@@ -152,14 +165,21 @@
       document.getElementById('qValue').innerText = `${e.target.value}%`;
     };
 
+    // ファイル選択時の処理
     document.getElementById('imageInput').onchange = async (e) => {
       const files = Array.from(e.target.files);
       if(!files.length) return;
-      zip = new JSZip();
+      
+      zip = new JSZip(); // グローバルなJSZipオブジェクトを使用
       document.getElementById('outputArea').innerHTML = '';
-      debug(`Processing ${files.length} files...`);
-      for(const file of files) await processFile(file);
+      debug(`${files.length} 件の処理を開始します...`);
+      
+      for(const file of files) {
+        await processFile(file);
+      }
+      
       document.getElementById('zipArea').classList.remove('hidden');
+      debug("すべての処理が完了しました。");
     };
 
     async function processFile(file) {
@@ -169,63 +189,66 @@
         const shouldStrip = document.getElementById('stripExif').checked;
 
         await ImageMagick.readCollection(bytes, (images) => {
+          // 最も解像度が高いメイン画像を選択
           const img = [...images].sort((a,b) => (b.width*b.height)-(a.width*a.height))[0];
-          img.autoOrient();
-          img.page = new MagickGeometry(0,0,img.width,img.height);
+          
+          img.autoOrient(); // 向き補正
+          img.page = new MagickGeometry(0,0,img.width,img.height); // キャンバスリセット
           
           const w = img.width, h = img.height;
           const ratio = getAspectRatio(w, h);
           const model = img.getAttribute("exif:Model") || "Unknown";
 
+          // メタデータ削除
           if(shouldStrip) img.strip();
 
-          // ★重要：ここで出力フォーマットを明示的にセットする
+          // 出力設定
           if(currentFormat === 'JPG') {
-            img.format = MagickFormat.Jpeg;
             img.backgroundColor = new MagickColor("white");
-            try { img.alpha(11); } catch(e){} // 透過を消去
+            try { img.alpha(11); } catch(e){} // 透過を白で埋める
             img.quality = quality;
-          } else {
-            img.format = MagickFormat.Png;
-            // PNGの場合はアルファチャンネルを保持（透過を維持）
           }
           
-          // 第1引数にフォーマットを渡さず、プロパティで指定した状態で書き出す
-          img.write(data => {
+          const fmt = currentFormat === 'JPG' ? MagickFormat.Jpeg : MagickFormat.Png;
+          
+          img.write(fmt, data => {
             const ext = currentFormat.toLowerCase();
             const blob = new Blob([data], {type: `image/${ext}`});
             const outName = file.name.replace(/\.[^/.]+$/, "") + "." + ext;
+            
             zip.file(outName, blob);
             addInfoCard(URL.createObjectURL(blob), outName, w, h, ratio, model);
-            debug(`Success: ${outName}`);
+            debug(`変換成功: ${outName}`);
           });
         });
-      } catch(e) { debug(`Error: ${file.name}`); }
+      } catch(e) { 
+        debug(`エラー [${file.name}]: ${e.message}`); 
+      }
     }
 
     function addInfoCard(url, name, w, h, ratio, model) {
       const container = document.getElementById('outputArea');
       const card = document.createElement('div');
-      card.className = "bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-md flex flex-col";
+      card.className = "bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-md shadow-gray-100/50 flex flex-col transition-all hover:shadow-lg";
       card.innerHTML = `
-        <div class="h-40 bg-gray-50 flex items-center justify-center p-4">
-          <img src="${url}" class="max-w-full max-h-full object-contain rounded shadow-sm">
+        <div class="h-40 bg-gray-50 flex items-center justify-center p-4 border-b border-gray-50">
+          <img src="${url}" class="max-w-full max-h-full object-contain shadow-sm rounded">
         </div>
         <div class="p-5">
-          <div class="text-[10px] font-bold text-gray-300 uppercase truncate">${name}</div>
-          <div class="flex gap-2 mt-4 text-center">
-            <div class="flex-1 bg-gray-50 rounded-xl p-2 border border-gray-100">
+          <div class="text-[10px] font-bold text-gray-300 uppercase tracking-tighter mb-1 truncate">${name}</div>
+          <div class="flex gap-2 mt-4">
+            <div class="flex-1 bg-gray-50 rounded-xl p-2 text-center border border-gray-100">
               <div class="text-[8px] text-gray-400 font-bold uppercase">Size</div>
               <div class="text-[10px] font-bold text-gray-700">${w}×${h}</div>
             </div>
-            <div class="flex-1 bg-blue-50/50 rounded-xl p-2 border border-blue-50/50">
+            <div class="flex-1 bg-blue-50/50 rounded-xl p-2 text-center border border-blue-50/50">
               <div class="text-[8px] text-blue-400 font-bold uppercase">Ratio</div>
               <div class="text-[10px] font-bold text-blue-600">${ratio}</div>
             </div>
           </div>
-          <div class="mt-4 pt-4 border-t border-gray-50 flex justify-between text-[9px]">
-            <span class="text-gray-400">Camera: ${model}</span>
-            <a href="${url}" download="${name}" class="text-blue-500 font-bold italic underline">Download</a>
+          <div class="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between text-[9px]">
+            <span class="text-gray-400 font-medium">Model: <span class="text-gray-600 font-bold">${model}</span></span>
+            <a href="${url}" download="${name}" class="text-blue-500 font-bold hover:underline italic">Download</a>
           </div>
         </div>
       `;
@@ -236,7 +259,7 @@
       const content = await zip.generateAsync({type:"blob"});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(content);
-      a.download = `converted_images.zip`;
+      a.download = `converted_images_${Date.now()}.zip`;
       a.click();
     };
 
