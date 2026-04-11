@@ -2,54 +2,61 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Image Editor Pro - Collection Fix</title>
+  <title>Image Editor Pro - Ultimate Fix</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-200 min-h-screen">
+<body class="bg-slate-950 text-slate-200 min-h-screen">
 
-  <div class="max-w-4xl mx-auto p-6">
-    <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6">
-      <h1 class="text-xl font-bold mb-4">画像切り抜き <span class="text-xs text-indigo-400">Ver 3.0 (Collection Fix)</span></h1>
+  <div class="max-w-4xl mx-auto p-4 sm:p-8">
+    <div class="bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-6">
+      <h1 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <span class="bg-indigo-600 w-2 h-6 rounded-full"></span>
+        画像切り抜きツール <span class="text-xs font-mono text-slate-500">v4.0 Final</span>
+      </h1>
       
-      <div id="debugLog" class="mb-4 p-3 bg-black rounded font-mono text-[10px] text-green-400 overflow-y-auto max-h-32 border border-slate-700"></div>
+      <div id="debugLog" class="mb-4 p-4 bg-black rounded-xl font-mono text-[10px] text-green-400 overflow-y-auto max-h-40 border border-slate-800 leading-relaxed shadow-inner">
+        > システム起動中...
+      </div>
 
-      <input id="imageInput" type="file" multiple class="hidden" accept="image/*,.heic,.psd,.tiff" />
-      <label for="imageInput" id="dropZone" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-600 rounded-xl cursor-pointer hover:border-indigo-500 transition-all bg-slate-800/50">
-        <p id="uploadText" class="text-sm font-bold text-slate-400">エンジン読み込み中...</p>
+      <input id="imageInput" type="file" multiple class="hidden" accept="image/*,.heic,.psd,.tiff,.webp" />
+      <label for="imageInput" id="dropZone" class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-slate-700 rounded-2xl cursor-pointer hover:border-indigo-500 hover:bg-slate-800/50 transition-all group">
+        <p id="uploadText" class="text-sm font-bold text-slate-500 group-hover:text-indigo-400">エンジン読み込み中...</p>
       </label>
 
-      <div id="zipArea" class="mt-6 text-center hidden">
-        <button id="downloadZipBtn" class="bg-indigo-600 px-8 py-2 rounded-full font-bold hover:bg-indigo-700 transition">一括保存 (ZIP)</button>
+      <div id="zipArea" class="mt-8 text-center hidden">
+        <button id="downloadZipBtn" class="bg-indigo-600 px-10 py-3 rounded-full font-bold hover:bg-indigo-500 transition shadow-xl shadow-indigo-900/20">一括保存 (ZIPファイルを作成)</button>
       </div>
-      <div id="outputArea" class="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-6"></div>
+      <div id="outputArea" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 mt-8"></div>
     </div>
   </div>
 
-  <div id="cropModal" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-slate-800 rounded-2xl w-full max-w-4xl overflow-hidden border border-slate-700 flex flex-col shadow-2xl">
-      <div class="p-3 border-b border-slate-700 flex justify-between items-center bg-slate-800">
-        <span id="modalTitle" class="text-[10px] font-mono truncate max-w-[200px]"></span>
-        <span id="queueInfo" class="text-[10px] bg-indigo-900 px-2 py-0.5 rounded text-indigo-200"></span>
+  <div id="cropModal" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center hidden p-4 backdrop-blur-sm">
+    <div class="bg-slate-900 rounded-3xl w-full max-w-5xl overflow-hidden border border-slate-800 flex flex-col shadow-2xl">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <span id="modalTitle" class="text-[10px] font-mono text-slate-400 truncate max-w-[300px]"></span>
+        <span id="queueInfo" class="text-[10px] font-bold bg-slate-800 px-3 py-1 rounded-full text-indigo-400 tracking-tighter"></span>
       </div>
-      <div class="bg-black flex-grow flex items-center justify-center relative min-h-[50vh]">
-        <img id="editingImage" class="max-w-full max-h-full">
-        <div id="modalLoading" class="absolute inset-0 bg-black/70 flex flex-col items-center justify-center">
-          <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-          <p class="text-[10px] font-bold text-indigo-400 uppercase">Processing Frame...</p>
+      
+      <div class="bg-[#050505] flex-grow flex items-center justify-center relative min-h-[55vh]">
+        <img id="editingImage" class="max-w-full max-h-full opacity-0 transition-opacity duration-300">
+        <div id="modalLoading" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center">
+          <div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+          <p class="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">Analyzing Data...</p>
         </div>
       </div>
-      <div class="p-4 bg-slate-800 border-t border-slate-700 flex justify-between items-center">
-        <div class="flex gap-1 bg-black p-1 rounded">
-          <button class="ratio-btn px-3 py-1 bg-indigo-600 text-[10px] rounded text-white" data-ratio="NaN">Free</button>
-          <button class="ratio-btn px-3 py-1 text-slate-400 text-[10px] rounded" data-ratio="1.7777">16:9</button>
-          <button class="ratio-btn px-3 py-1 text-slate-400 text-[10px] rounded" data-ratio="1">1:1</button>
+
+      <div class="p-5 bg-slate-900 border-t border-slate-800 flex flex-wrap justify-between items-center gap-4">
+        <div class="flex gap-1 bg-black/50 p-1 rounded-xl border border-slate-800">
+          <button class="ratio-btn px-4 py-2 bg-indigo-600 text-[10px] rounded-lg text-white font-bold" data-ratio="NaN">FREE</button>
+          <button class="ratio-btn px-4 py-2 text-slate-500 text-[10px] rounded-lg font-bold hover:text-white" data-ratio="1.7777777">16:9</button>
+          <button class="ratio-btn px-4 py-2 text-slate-500 text-[10px] rounded-lg font-bold hover:text-white" data-ratio="1">1:1</button>
         </div>
-        <div class="flex gap-2">
-          <button id="skipBtn" class="px-4 py-2 text-[10px] text-slate-500 hover:text-white transition">SKIP</button>
-          <button id="cropConfirmBtn" class="px-8 py-2 bg-indigo-600 rounded-full text-[10px] font-bold shadow-lg hover:bg-indigo-500 transition">APPLY & NEXT</button>
+        <div class="flex gap-3">
+          <button id="skipBtn" class="px-6 py-2.5 text-[10px] font-bold text-slate-500 hover:text-white transition uppercase tracking-widest">Skip</button>
+          <button id="cropConfirmBtn" class="px-10 py-2.5 bg-indigo-600 rounded-full text-[10px] font-bold shadow-lg shadow-indigo-900/40 hover:bg-indigo-500 transition uppercase tracking-widest">Apply & Next</button>
         </div>
       </div>
     </div>
@@ -75,10 +82,10 @@
       try {
         const resp = await fetch('https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.39/dist/magick.wasm');
         await initializeImageMagick(new Uint8Array(await resp.arrayBuffer()));
-        debug("ImageMagick Engine Loaded.");
+        debug("Engine Ready. All systems functional.");
         document.getElementById('imageInput').disabled = false;
-        document.getElementById('uploadText').innerText = "画像を選択 (複数可)";
-      } catch(e) { debug("Init Error: " + e.message, "err"); }
+        document.getElementById('uploadText').innerText = "Drop images here or click to browse";
+      } catch(e) { debug("Critical Init Error: " + e.message, "err"); }
     }
 
     let queue = [], index = 0, zip = null, cropper = null;
@@ -91,56 +98,54 @@
       processNext();
     };
 
-    // 読み込まれた画像群から、面積が最大のものを返す
-    function getLargestFrame(collection) {
-      let maxIdx = 0;
-      let maxArea = 0;
-      for (let i = 0; i < collection.length; i++) {
-        const area = collection[i].width * collection[i].height;
-        if (area > maxArea) {
-          maxArea = area;
-          maxIdx = i;
-        }
-      }
-      return collection[maxIdx];
-    }
+    // 最も大きい解像度の画像を探す
+    const findBestFrame = (images) => {
+      return [...images].sort((a, b) => (b.width * b.height) - (a.width * a.height))[0];
+    };
 
     async function processNext() {
       if(index >= queue.length) {
         document.getElementById('cropModal').classList.add('hidden');
         if(document.getElementById('outputArea').childElementCount > 0) document.getElementById('zipArea').classList.remove('hidden');
+        debug("Batch processing complete.", "debug");
         return;
       }
 
       const file = queue[index];
       document.getElementById('cropModal').classList.remove('hidden');
       document.getElementById('modalTitle').innerText = file.name;
-      document.getElementById('queueInfo').innerText = `${index+1} / ${queue.length}`;
+      document.getElementById('queueInfo').innerText = `${index + 1} / ${queue.length}`;
       document.getElementById('modalLoading').classList.remove('hidden');
+      document.getElementById('editingImage').classList.add('opacity-0');
 
       try {
         const bytes = new Uint8Array(await file.arrayBuffer());
         
-        // ImageMagick.readCollection を使用して全フレームを読み込む
         await ImageMagick.readCollection(bytes, (images) => {
-          debug(`File contains ${images.length} frame(s).`);
-          const main = getLargestFrame(images);
+          debug(`Decoding ${file.name}... (Found ${images.length} layers)`);
+          const main = findBestFrame(images);
           
           main.autoOrient();
           main.page = new MagickGeometry(0, 0, main.width, main.height);
           
-          debug(`Selected Frame: ${main.width}x${main.height}`, "debug");
+          debug(`Selected resolution: ${main.width}x${main.height}`, "debug");
 
-          main.write(data => {
+          // エラー回避：引数を正しい順番 (Format, Callback) で渡す
+          main.write(MagickFormat.Png, data => {
             const url = URL.createObjectURL(new Blob([data], {type:'image/png'}));
             const imgEl = document.getElementById('editingImage');
             imgEl.src = url;
             imgEl.onload = () => {
               document.getElementById('modalLoading').classList.add('hidden');
+              imgEl.classList.remove('opacity-0');
               if(cropper) cropper.destroy();
-              cropper = new Cropper(imgEl, { viewMode: 1, autoCropArea: 0.8 });
+              cropper = new Cropper(imgEl, { 
+                viewMode: 1, 
+                autoCropArea: 0.8,
+                background: false
+              });
             };
-          }, MagickFormat.Png);
+          });
         });
       } catch(e) { debug(`Read Error: ${e.message}`, "err"); index++; processNext(); }
     }
@@ -154,36 +159,41 @@
       try {
         const bytes = new Uint8Array(await file.arrayBuffer());
         
-        await ImageMagick.readCollection(bytes, async (images) => {
-          const img = getLargestFrame(images);
+        await ImageMagick.readCollection(bytes, (images) => {
+          const img = findBestFrame(images);
           img.autoOrient();
           img.page = new MagickGeometry(0, 0, img.width, img.height);
 
-          // ズレ防止：文字列によるジオメトリ指定 "幅x高さ+x+y"
-          const geoStr = `${crop.width}x${crop.height}+${Math.max(0, crop.x)}+${Math.max(0, crop.y)}`;
-          debug(`Cropping: ${geoStr}`, "debug");
+          // ジオメトリ指定。数値4つを渡すと混乱するため、文字列で渡すのが最も安全
+          const geometry = new MagickGeometry(
+            Math.max(1, crop.width),
+            Math.max(1, crop.height),
+            Math.max(0, crop.x),
+            Math.max(0, crop.y)
+          );
           
-          img.crop(new MagickGeometry(geoStr));
-          img.page = new MagickGeometry(0, 0, img.width, img.height); // 切り抜き後キャンバスリセット
+          img.crop(geometry);
+          img.page = new MagickGeometry(0, 0, img.width, img.height); 
 
-          img.backgroundColor = new MagickColor("white");
-          try { img.alpha(11); } catch(e){}
+          img.backgroundColor = new MagickColor("#FFFFFF");
+          try { img.alpha(11); } catch(e){} // 透過を消去
 
           img.format = MagickFormat.Jpeg;
-          img.quality = 90;
+          img.quality = 85;
 
+          // 書き出し処理
           img.write(data => {
             const blob = new Blob([data], {type:'image/jpeg'});
             const url = URL.createObjectURL(blob);
-            const name = file.name.replace(/\.[^/.]+$/, "") + "_edit.jpg";
+            const name = file.name.replace(/\.[^/.]+$/, "") + "_edited.jpg";
             zip.file(name, blob);
             
             const div = document.createElement('div');
-            div.className = "bg-slate-800 p-1 border border-slate-700 rounded text-center";
-            div.innerHTML = `<img src="${url}" class="h-16 w-full object-contain bg-black mb-1"><a href="${url}" download="${name}" class="text-[8px] text-indigo-400 font-bold uppercase">Save</a>`;
+            div.className = "bg-slate-900 p-2 border border-slate-800 rounded-2xl text-center shadow-lg";
+            div.innerHTML = `<img src="${url}" class="h-20 w-full object-contain bg-black rounded-lg mb-2"><a href="${url}" download="${name}" class="text-[9px] text-indigo-400 font-bold uppercase tracking-tighter hover:text-white transition">Save JPG</a>`;
             document.getElementById('outputArea').appendChild(div);
             
-            debug(`Success: ${name}`);
+            debug(`Success: ${name} (${img.width}x${img.height})`);
             index++;
             processNext();
           });
@@ -191,21 +201,27 @@
       } catch(e) { debug(`Apply Error: ${e.message}`, "err"); document.getElementById('modalLoading').classList.add('hidden'); }
     };
 
-    // UI制御
+    // ボタンUIイベント
     document.querySelectorAll('.ratio-btn').forEach(b => {
       b.onclick = (e) => {
         cropper.setAspectRatio(parseFloat(e.target.dataset.ratio));
-        document.querySelectorAll('.ratio-btn').forEach(btn => btn.classList.replace('bg-indigo-600', 'text-slate-400'));
-        e.target.classList.replace('text-slate-400', 'bg-indigo-600');
+        document.querySelectorAll('.ratio-btn').forEach(btn => btn.classList.replace('bg-indigo-600', 'text-slate-500'));
+        e.target.classList.replace('text-slate-500', 'bg-indigo-600');
         e.target.classList.add('text-white');
       };
     });
-    document.getElementById('skipBtn').onclick = () => { index++; processNext(); };
+
+    document.getElementById('skipBtn').onclick = () => { 
+      debug(`Skipped: ${queue[index].name}`, "warn");
+      index++; 
+      processNext(); 
+    };
+
     document.getElementById('downloadZipBtn').onclick = async () => {
       const content = await zip.generateAsync({type:"blob"});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(content);
-      a.download = "edited_images.zip";
+      a.download = `images_pack_${Date.now()}.zip`;
       a.click();
     };
 
