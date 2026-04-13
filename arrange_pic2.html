@@ -3,50 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Aspect Fitter</title>
+  <title>Image Aspect Fitter Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    .safe-badge { font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px; transition: all 0.3s; }
+    .safe-badge { font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px; }
+    .hidden-input { display: none; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen p-4 md:p-8">
   <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 md:p-8">
     
     <div class="text-center mb-8">
-      <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Image Aspect Fitter</h1>
-      <p class="text-gray-500 text-sm">余白を追加して、指定の画角に調整します。</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Image Aspect Fitter Pro</h1>
+      <p class="text-gray-500 text-sm">背景を「色」にするか「画像」にするか選べます。</p>
     </div>
 
     <div id="uploadArea" class="flex items-center justify-center w-full mb-6">
       <label for="imageInput" class="flex flex-col items-center justify-center w-full h-48 border-2 border-blue-300 border-dashed rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition">
         <div class="flex flex-col items-center justify-center pt-5 pb-6">
           <svg class="w-12 h-12 mb-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-          <p class="mb-2 text-sm text-gray-700 font-semibold">画像を選択してください</p>
+          <p class="mb-2 text-sm text-gray-700 font-semibold text-center px-4">メインとなる画像をアップロード</p>
         </div>
         <input id="imageInput" type="file" accept="image/png, image/jpeg" class="hidden" />
       </label>
     </div>
 
     <div id="editorArea" class="hidden space-y-6">
-      <div class="bg-gray-50 p-4 rounded-lg flex flex-wrap gap-y-3 gap-x-6 items-center justify-center border border-gray-200">
+      <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 space-y-4">
         
-        <div class="flex flex-col items-center gap-1">
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-medium text-gray-600">背景色:</span>
-            <input type="text" id="hexInput" value="#FFFFFF" class="w-24 px-2 py-1 border border-gray-300 rounded text-sm font-mono uppercase focus:ring-2 focus:ring-blue-400 outline-none">
-            <input type="color" id="bgColorInput" value="#ffffff" class="w-8 h-8 rounded cursor-pointer border border-gray-300 p-0.5 bg-white">
-          </div>
-          <div id="safeColorStatus" class="safe-badge bg-gray-200 text-gray-500">CHECKING...</div>
+        <div class="flex justify-center gap-8 border-b pb-4">
+          <label class="flex items-center cursor-pointer font-medium text-gray-700">
+            <input type="radio" name="bgMode" value="color" checked class="mr-2"> 単色塗り
+          </label>
+          <label class="flex items-center cursor-pointer font-medium text-gray-700">
+            <input type="radio" name="bgMode" value="image" class="mr-2"> 背景画像
+          </label>
         </div>
-        
-        <div class="hidden md:block w-px h-10 bg-gray-300 mx-2"></div>
-        
-        <div class="flex items-center gap-1.5 flex-wrap justify-center">
-          <span class="text-sm font-medium text-gray-600">比率:</span>
-          <button class="aspect-btn px-3 py-1.5 bg-blue-50 border border-blue-300 rounded text-sm text-blue-700 font-medium shadow-sm transition" data-aspect="original">そのまま</button>
-          <button class="aspect-btn px-3 py-1.5 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100 text-gray-700 shadow-sm transition" data-aspect="1.7777777777777777">16:9</button>
-          <button class="aspect-btn px-3 py-1.5 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100 text-gray-700 shadow-sm transition" data-aspect="1.3333333333333333">4:3</button>
-          <button class="aspect-btn px-3 py-1.5 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100 text-gray-700 shadow-sm transition" data-aspect="1">1:1</button>
+
+        <div class="flex flex-wrap gap-y-4 gap-x-10 items-start justify-center">
+          <div id="colorSettings" class="flex flex-col items-center gap-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-gray-600">背景色:</span>
+              <input type="text" id="hexInput" value="#FFFFFF" class="w-24 px-2 py-1 border border-gray-300 rounded text-sm font-mono uppercase outline-none focus:ring-2 focus:ring-blue-400">
+              <input type="color" id="bgColorInput" value="#ffffff" class="w-8 h-8 rounded cursor-pointer border border-gray-300 p-0.5 bg-white">
+            </div>
+            <div id="safeColorStatus" class="safe-badge bg-gray-100 text-gray-400 border border-gray-200">CHECKING...</div>
+          </div>
+
+          <div id="imageSettings" class="hidden flex flex-col items-center gap-2">
+            <span class="text-sm font-medium text-gray-600">背景用ファイル:</span>
+            <input type="file" id="bgImageInput" accept="image/png, image/jpeg" class="text-xs text-gray-500 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+          </div>
+
+          <div class="flex flex-col items-center gap-2">
+            <div class="flex items-center gap-1.5 flex-wrap justify-center">
+              <span class="text-sm font-medium text-gray-600">比率:</span>
+              <button class="aspect-btn px-3 py-1 bg-blue-50 border border-blue-300 rounded text-sm text-blue-700 font-medium transition" data-aspect="original">そのまま</button>
+              <button class="aspect-btn px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-700 transition" data-aspect="1.7777777777777777">16:9</button>
+              <button class="aspect-btn px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-700 transition" data-aspect="1.3333333333333333">4:3</button>
+              <button class="aspect-btn px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-700 transition" data-aspect="1">1:1</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -54,22 +71,14 @@
         <img id="imagePreview" src="" alt="プレビュー" class="w-full h-full object-contain drop-shadow-md">
       </div>
 
-      <div class="bg-blue-50 p-6 rounded-xl border border-blue-100 space-y-4 text-center">
+      <div class="bg-blue-50 p-6 rounded-xl border border-blue-100 text-center">
         <div class="flex items-center justify-center gap-6 mb-4">
-          <label class="inline-flex items-center cursor-pointer">
-            <input type="radio" name="format" value="image/jpeg" checked class="w-4 h-4 text-blue-600">
-            <span class="ml-2 text-sm text-gray-700">JPG</span>
-          </label>
-          <label class="inline-flex items-center cursor-pointer">
-            <input type="radio" name="format" value="image/png" class="w-4 h-4 text-blue-600">
-            <span class="ml-2 text-sm text-gray-700">PNG</span>
-          </label>
+          <label class="inline-flex items-center cursor-pointer"><input type="radio" name="format" value="image/jpeg" checked class="w-4 h-4"><span class="ml-2 text-sm text-gray-700">JPG</span></label>
+          <label class="inline-flex items-center cursor-pointer"><input type="radio" name="format" value="image/png" class="w-4 h-4"><span class="ml-2 text-sm text-gray-700">PNG</span></label>
         </div>
         <div class="flex gap-4 justify-center">
-          <button id="cancelBtn" class="px-6 py-2.5 border border-gray-300 bg-white text-gray-700 rounded-full hover:bg-gray-100 text-sm">やり直す</button>
-          <button id="saveBtn" class="px-10 py-3 bg-green-600 text-white font-bold rounded-full hover:bg-green-700 shadow-lg flex items-center transition">
-            保存する
-          </button>
+          <button id="cancelBtn" class="px-6 py-2 bg-white border border-gray-300 rounded-full text-sm">やり直す</button>
+          <button id="saveBtn" class="px-10 py-3 bg-green-600 text-white font-bold rounded-full hover:bg-green-700 shadow-lg">保存する</button>
         </div>
       </div>
     </div>
@@ -77,121 +86,149 @@
 
   <script>
     const imageInput = document.getElementById('imageInput');
+    const bgImageInput = document.getElementById('bgImageInput');
     const uploadArea = document.getElementById('uploadArea');
     const editorArea = document.getElementById('editorArea');
     const imagePreview = document.getElementById('imagePreview');
-    const aspectBtns = document.querySelectorAll('.aspect-btn');
+    const bgModeRadios = document.getElementsByName('bgMode');
+    const colorSettings = document.getElementById('colorSettings');
+    const imageSettings = document.getElementById('imageSettings');
     const bgColorInput = document.getElementById('bgColorInput');
     const hexInput = document.getElementById('hexInput');
     const safeColorStatus = document.getElementById('safeColorStatus');
-    const cancelBtn = document.getElementById('cancelBtn');
+    const aspectBtns = document.querySelectorAll('.aspect-btn');
     const saveBtn = document.getElementById('saveBtn');
 
-    let originalImage = new Image();
+    let mainImg = new Image();
+    let bgImg = new Image();
     let originalFileName = "";
     let currentAspect = 'original';
     let currentBgColor = '#FFFFFF';
+    let bgMode = 'color'; // 'color' or 'image'
     let outputCanvas = null;
 
-    // Webセーフカラー判定関数
-    function checkWebSafe(hex) {
-      const cleanHex = hex.replace('#', '');
-      // 3桁なら6桁に変換
-      const fullHex = cleanHex.length === 3 
-        ? cleanHex.split('').map(c => c + c).join('') 
-        : cleanHex;
-      
-      const r = parseInt(fullHex.substring(0, 2), 16);
-      const g = parseInt(fullHex.substring(2, 4), 16);
-      const b = parseInt(fullHex.substring(4, 6), 16);
+    // モード切替
+    bgModeRadios.forEach(r => {
+      r.addEventListener('change', (e) => {
+        bgMode = e.target.value;
+        if (bgMode === 'color') {
+          colorSettings.classList.remove('hidden');
+          imageSettings.classList.add('hidden');
+        } else {
+          colorSettings.classList.add('hidden');
+          imageSettings.classList.remove('hidden');
+        }
+        processImage();
+      });
+    });
 
-      const safeValues = [0, 51, 102, 153, 204, 255]; // 00, 33, 66, 99, CC, FF
-      const isSafe = safeValues.includes(r) && safeValues.includes(g) && safeValues.includes(b);
+    // 背景画像読み込み
+    bgImageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        bgImg.onload = () => processImage();
+        bgImg.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
 
-      if (isSafe) {
-        safeColorStatus.textContent = "✓ Web Safe Color";
-        safeColorStatus.className = "safe-badge bg-green-100 text-green-700 border border-green-200";
-      } else {
-        safeColorStatus.textContent = "× Not Web Safe";
-        safeColorStatus.className = "safe-badge bg-gray-100 text-gray-400 border border-gray-200";
-      }
-    }
-
-    // 色入力を同期させる
-    function updateColor(newColor, source) {
-      if (!newColor.startsWith('#')) newColor = '#' + newColor;
-      if (!/^#[0-9A-F]{3,6}$/i.test(newColor)) return;
-
-      currentBgColor = newColor;
-      if (source !== 'picker') bgColorInput.value = newColor;
-      if (source !== 'hex') hexInput.value = newColor.toUpperCase();
-      
-      checkWebSafe(newColor);
-      processImage();
-    }
-
-    hexInput.addEventListener('input', (e) => updateColor(e.target.value, 'hex'));
-    bgColorInput.addEventListener('input', (e) => updateColor(e.target.value, 'picker'));
-
-    // 画像読み込み
-    imageInput.addEventListener('change', function(e) {
+    // メイン画像読み込み
+    imageInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
       originalFileName = file.name.replace(/\.[^/.]+$/, "");
       const reader = new FileReader();
-      reader.onload = (event) => {
-        originalImage.onload = () => {
+      reader.onload = (ev) => {
+        mainImg.onload = () => {
           uploadArea.classList.add('hidden');
           editorArea.classList.remove('hidden');
           checkWebSafe(currentBgColor);
           processImage();
         };
-        originalImage.src = event.target.result;
+        mainImg.src = ev.target.result;
       };
       reader.readAsDataURL(file);
     });
 
-    // 画角切り替え
+    // 色とセーフカラー判定
+    function checkWebSafe(hex) {
+      const cleanHex = hex.replace('#', '');
+      const fullHex = cleanHex.length === 3 ? cleanHex.split('').map(c => c + c).join('') : cleanHex;
+      const r = parseInt(fullHex.substring(0, 2), 16), g = parseInt(fullHex.substring(2, 4), 16), b = parseInt(fullHex.substring(4, 6), 16);
+      const safeV = [0, 51, 102, 153, 204, 255];
+      const isSafe = safeV.includes(r) && safeV.includes(g) && safeV.includes(b);
+      safeColorStatus.textContent = isSafe ? "✓ Web Safe Color" : "× Not Web Safe";
+      safeColorStatus.className = isSafe ? "safe-badge bg-green-100 text-green-700 border border-green-200" : "safe-badge bg-gray-100 text-gray-400 border border-gray-200";
+    }
+
+    function updateColor(val, src) {
+      if (!val.startsWith('#')) val = '#' + val;
+      if (!/^#[0-9A-F]{3,6}$/i.test(val)) return;
+      currentBgColor = val;
+      if (src !== 'picker') bgColorInput.value = val;
+      if (src !== 'hex') hexInput.value = val.toUpperCase();
+      checkWebSafe(val);
+      processImage();
+    }
+    hexInput.addEventListener('input', (e) => updateColor(e.target.value, 'hex'));
+    bgColorInput.addEventListener('input', (e) => updateColor(e.target.value, 'picker'));
+
+    // 画角ボタン
     aspectBtns.forEach(btn => {
       btn.addEventListener('click', function() {
         currentAspect = this.getAttribute('data-aspect');
-        aspectBtns.forEach(b => {
-          b.classList.replace('bg-blue-50', 'bg-white');
-          b.classList.remove('border-blue-300', 'text-blue-700', 'font-medium');
-        });
+        aspectBtns.forEach(b => b.classList.replace('bg-blue-50', 'bg-white'));
         this.classList.replace('bg-white', 'bg-blue-50');
-        this.classList.add('border-blue-300', 'text-blue-700', 'font-medium');
         processImage();
       });
     });
 
+    // メイン描画ロジック
     function processImage() {
-      if (!originalImage.src) return;
+      if (!mainImg.src) return;
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const sw = originalImage.width;
-      const sh = originalImage.height;
+      const sw = mainImg.width, sh = mainImg.height;
       let tw = sw, th = sh;
 
       if (currentAspect !== 'original') {
         const targetRatio = parseFloat(currentAspect);
-        if (targetRatio > sw / sh) {
-          th = sh; tw = Math.round(sh * targetRatio);
+        if (targetRatio > sw / sh) { th = sh; tw = Math.round(sh * targetRatio); }
+        else { tw = sw; th = Math.round(sw / targetRatio); }
+      }
+      canvas.width = tw; canvas.height = th;
+
+      // 背景の描画
+      if (bgMode === 'color') {
+        ctx.fillStyle = currentBgColor;
+        ctx.fillRect(0, 0, tw, th);
+      } else if (bgImg.src) {
+        // 背景画像を「カバー」するように描画（アスペクト比を維持して隙間なく埋める）
+        const bgRatio = bgImg.width / bgImg.height;
+        const canvasRatio = tw / th;
+        let dw, dh, dx, dy;
+        if (bgRatio > canvasRatio) {
+          dh = th; dw = th * bgRatio; dx = (tw - dw) / 2; dy = 0;
         } else {
-          tw = sw; th = Math.round(sw / targetRatio);
+          dw = tw; dh = tw / bgRatio; dx = 0; dy = (th - dh) / 2;
         }
+        ctx.drawImage(bgImg, dx, dy, dw, dh);
+      } else {
+        // 画像未選択時はグレー
+        ctx.fillStyle = '#cccccc';
+        ctx.fillRect(0, 0, tw, th);
       }
 
-      canvas.width = tw; canvas.height = th;
-      ctx.fillStyle = currentBgColor;
-      ctx.fillRect(0, 0, tw, th);
-      ctx.drawImage(originalImage, (tw - sw) / 2, (th - sh) / 2, sw, sh);
+      // メイン画像を中央に配置
+      ctx.drawImage(mainImg, (tw - sw) / 2, (th - sh) / 2, sw, sh);
       
       outputCanvas = canvas;
       imagePreview.src = canvas.toDataURL('image/jpeg', 0.9);
     }
 
-    saveBtn.addEventListener('click', function() {
+    saveBtn.addEventListener('click', () => {
       const format = document.querySelector('input[name="format"]:checked').value;
       outputCanvas.toBlob(blob => {
         const a = document.createElement('a');
@@ -201,7 +238,7 @@
       }, format, 0.95);
     });
 
-    cancelBtn.addEventListener('click', () => location.reload());
+    document.getElementById('cancelBtn').addEventListener('click', () => location.reload());
   </script>
 </body>
 </html>
