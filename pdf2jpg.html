@@ -41,10 +41,10 @@
 
   <script type="module">
     // 1. ES Modules形式で最新のv5ライブラリ（.mjs）をインポート
-    import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5/build/pdf.mjs';
+    import * as pdfjsLib from './lib/pdf.mjs';
 
     // 2. Workerも必ず最新の .mjs を指定する
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5/build/pdf.worker.mjs';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdf.worker.mjs';
 
     const pdfInput = document.getElementById('pdfInput');
     const statusDiv = document.getElementById('status');
