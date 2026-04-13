@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Aspect Fitter Ultra+</title>
+  <title>Image Aspect Fitter Ultra+ 20</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
@@ -13,17 +13,22 @@
     input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #e5e7eb; border-radius: 3px; }
     input[type=range]::-webkit-slider-thumb { height: 16px; width: 16px; border-radius: 50%; background: #3b82f6; cursor: pointer; -webkit-appearance: none; margin-top: -5px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
     #hueRange::-webkit-slider-runnable-track { background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%); }
-    .preset-thumb { transition: all 0.2s; border: 2px solid transparent; cursor: pointer; position: relative; }
-    .preset-thumb:hover { transform: scale(1.05); }
-    .preset-thumb.active { border-color: #3b82f6; background-color: #eff6ff; }
+    .preset-thumb { transition: all 0.2s; border: 2px solid transparent; cursor: pointer; position: relative; flex-shrink: 0; }
+    .preset-thumb:hover { transform: scale(1.05); z-index: 10; }
+    .preset-thumb.active { border-color: #3b82f6; background-color: #eff6ff; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); }
+    /* スクロールバーのカスタマイズ */
+    #presetList::-webkit-scrollbar { width: 6px; }
+    #presetList::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    #presetList::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    #presetList::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen p-4 md:p-8 text-slate-900">
   <div class="max-w-5xl mx-auto">
     
     <header class="text-center mb-8">
-      <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight mb-2">Image Aspect Fitter <span class="text-blue-600">Ultra+</span></h1>
-      <p class="text-slate-500 font-medium">背景プリセット機能を追加しました。</p>
+      <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight mb-2">Image Aspect Fitter <span class="text-blue-600">Pro 20</span></h1>
+      <p class="text-slate-500 font-medium">20種類の背景プリセットに対応しました。</p>
     </header>
 
     <div id="uploadArea" class="bg-white border-2 border-dashed border-slate-300 rounded-3xl p-12 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer shadow-sm">
@@ -43,9 +48,9 @@
           <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
             <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">背景の設定</h3>
             <div class="flex bg-slate-100 p-1 rounded-xl mb-6 flex-wrap">
-              <button id="modeColorBtn" class="flex-1 py-2 text-[11px] font-bold rounded-lg bg-white shadow-sm text-blue-600 transition-all">単色塗り</button>
-              <button id="modePresetBtn" class="flex-1 py-2 text-[11px] font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all">プリセット</button>
-              <button id="modeImageBtn" class="flex-1 py-2 text-[11px] font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all">アップロード</button>
+              <button id="modeColorBtn" class="flex-1 py-2 text-[10px] font-bold rounded-lg bg-white shadow-sm text-blue-600 transition-all">単色</button>
+              <button id="modePresetBtn" class="flex-1 py-2 text-[10px] font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all">プリセット</button>
+              <button id="modeImageBtn" class="flex-1 py-2 text-[10px] font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all">アップロード</button>
             </div>
 
             <div id="colorControls" class="space-y-4">
@@ -62,8 +67,8 @@
             </div>
 
             <div id="presetControls" class="hidden">
-              <p class="text-[10px] text-slate-400 mb-2 font-bold uppercase">bg/ フォルダ内の画像を選択</p>
-              <div id="presetList" class="grid grid-cols-5 gap-2">
+              <p class="text-[10px] text-slate-400 mb-2 font-bold uppercase">bg/ フォルダ (20枚対応)</p>
+              <div id="presetList" class="grid grid-cols-4 gap-2 max-h-[220px] overflow-y-auto pr-1">
                 </div>
             </div>
 
@@ -85,7 +90,7 @@
 
         <div class="lg:col-span-2 space-y-4">
           <div class="bg-slate-800 rounded-3xl p-4 shadow-2xl relative overflow-hidden flex items-center justify-center min-h-[400px] h-full">
-            <img id="imagePreview" src="" alt="Preview" class="max-w-full max-h-[600px] object-contain">
+            <img id="imagePreview" src="" alt="Preview" class="max-w-full max-h-[600px] object-contain shadow-md">
             <div class="absolute top-4 left-4 bg-black/40 backdrop-blur-md text-white text-[10px] font-mono px-3 py-1 rounded-full border border-white/20" id="sizeTag">0 x 0</div>
           </div>
         </div>
@@ -111,15 +116,15 @@
     let mainImg = new Image(), bgImg = new Image();
     let originalFileName = "", currentAspect = 'original', currentBgColor = '#FFFFFF', bgMode = 'color', outputCanvas = null;
 
-    // --- プリセット画像生成とエラーハンドリング ---
+    // --- プリセット画像生成 (20までループ) ---
     function initPresets() {
       const list = el('presetList');
-      for (let i = 1; i <= 10; i++) {
+      for (let i = 1; i <= 20; i++) { // 20に変更
         const num = i.toString().padStart(2, '0');
         const imgPath = `bg/${num}.png`;
         const div = document.createElement('div');
-        div.className = 'preset-thumb rounded-lg overflow-hidden bg-slate-200 aspect-square flex items-center justify-center';
-        div.innerHTML = `<img src="${imgPath}" class="w-full h-full object-cover" onerror="this.parentElement.style.display='none'">`;
+        div.className = 'preset-thumb rounded-lg overflow-hidden bg-slate-200 aspect-square flex items-center justify-center border-2';
+        div.innerHTML = `<img src="${imgPath}" class="w-full h-full object-cover" title="Preset ${num}" onerror="this.parentElement.style.display='none'">`;
         div.onclick = () => {
           document.querySelectorAll('.preset-thumb').forEach(t => t.classList.remove('active'));
           div.classList.add('active');
@@ -130,7 +135,7 @@
       }
     }
 
-    // --- Color Math (前回のロジック維持) ---
+    // --- Color Sync Logic ---
     const hexToHsl = (hex) => {
       let r = parseInt(hex.slice(1,3), 16)/255, g = parseInt(hex.slice(3,5), 16)/255, b = parseInt(hex.slice(5,7), 16)/255;
       let max = Math.max(r,g,b), min = Math.min(r,g,b), h, s, l = (max+min)/2;
@@ -160,7 +165,7 @@
       processImage();
     }
 
-    // --- メイン描画 ---
+    // --- Main Rendering ---
     function processImage() {
       if (!mainImg.src) return;
       const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'), sw = mainImg.width, sh = mainImg.height;
@@ -179,15 +184,13 @@
         let dw, dh, dx, dy;
         if (bgR > cnR) { dh=th; dw=th*bgR; dx=(tw-dw)/2; dy=0; } else { dw=tw; dh=tw/bgR; dx=0; dy=(th-dh)/2; }
         ctx.drawImage(bgImg, dx, dy, dw, dh);
-      } else {
-        ctx.fillStyle = '#cccccc'; ctx.fillRect(0, 0, tw, th);
       }
       ctx.drawImage(mainImg, (tw-sw)/2, (th-sh)/2, sw, sh);
       outputCanvas = canvas;
       el('imagePreview').src = canvas.toDataURL('image/jpeg', 0.9);
     }
 
-    // --- イベント ---
+    // --- Event Handling ---
     el('imageInput').onchange = e => {
       const file = e.target.files[0]; if (!file) return;
       originalFileName = file.name.replace(/\.[^/.]+$/, "");
@@ -208,7 +211,7 @@
       const buttons = { 'color': el('modeColorBtn'), 'preset': el('modePresetBtn'), 'image': el('modeImageBtn') };
       const areas = { 'color': el('colorControls'), 'preset': el('presetControls'), 'image': el('imageControls') };
       Object.keys(buttons).forEach(m => {
-        buttons[m].className = (m === activeMode) ? "flex-1 py-2 text-[11px] font-bold rounded-lg bg-white shadow-sm text-blue-600 transition-all" : "flex-1 py-2 text-[11px] font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all";
+        buttons[m].className = (m === activeMode) ? "flex-1 py-2 text-[10px] font-bold rounded-lg bg-white shadow-sm text-blue-600 transition-all" : "flex-1 py-2 text-[10px] font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all";
         areas[m].classList.toggle('hidden', m !== activeMode);
       });
       processImage();
@@ -239,7 +242,7 @@
 
     el('cancelBtn').onclick = () => location.reload();
 
-    initPresets(); // 初期化時にプリセット生成
+    initPresets(); 
   </script>
 </body>
 </html>
