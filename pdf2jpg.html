@@ -3,47 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF to JPG Converter</title>
+  <title>PDF to JPG Converter | Browser-Based</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="./lib/jszip.min.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 md:p-8">
-  <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 md:p-8">
-    <div class="text-center mb-8">
-      <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">PDFをJPGに変換</h1>
-      <p class="text-gray-500 text-sm">ファイルはサーバーに送信されず、お使いのブラウザ上で安全に処理されます。</p>
+<body class="bg-gray-50 min-h-screen p-4 md:p-8 text-gray-800">
+
+  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden p-6 md:p-10 border border-gray-100">
+    
+    <div class="text-center mb-10">
+      <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">PDFをJPGに変換</h1>
+      <p class="text-gray-500 text-sm leading-relaxed">
+        ファイルはサーバーに送信されません。すべてお使いのブラウザ上で安全に処理されます。<br>
+        機密書類や個人情報を含むPDFも安心してご利用いただけます。
+      </p>
     </div>
 
-    <div class="flex items-center justify-center w-full mb-6">
-      <label for="pdfInput" class="flex flex-col items-center justify-center w-full h-40 border-2 border-blue-300 border-dashed rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition">
+    <div class="mb-8 p-5 bg-blue-50 border border-blue-100 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label for="scaleSetting" class="block text-sm font-bold text-blue-900 mb-2">
+          解像度 <span class="text-xs font-normal text-blue-700">(DPI / 精細さ)</span>
+        </label>
+        <select id="scaleSetting" class="w-full p-2.5 border border-blue-200 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-400 outline-none transition">
+          <option value="1.0">標準 (72 DPI) - プレビュー用・軽量</option>
+          <option value="1.5">中画質 (108 DPI)</option>
+          <option value="2.0" selected>高画質 (144 DPI) - おすすめ</option>
+          <option value="3.0">超高画質 (216 DPI) - 印刷・精細</option>
+        </select>
+        <p class="mt-1 text-[11px] text-blue-600">※高くすると文字が鮮明になりますが、処理時間が増えます。</p>
+      </div>
+
+      <div>
+        <label for="qualitySetting" class="block text-sm font-bold text-blue-900 mb-2">
+          JPEG画質 <span class="text-xs font-normal text-blue-700">(Quality / 圧縮率)</span>
+        </label>
+        <select id="qualitySetting" class="w-full p-2.5 border border-blue-200 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-400 outline-none transition">
+          <option value="0.7">低 (70%) - ファイル容量を節約</option>
+          <option value="0.8">中 (80%)</option>
+          <option value="0.9" selected>高 (90%) - おすすめ</option>
+          <option value="1.0">最高 (100%) - ノイズを最小化</option>
+        </select>
+        <p class="mt-1 text-[11px] text-blue-600">※高くすると画像がクリアになりますが、ファイルサイズが大きくなります。</p>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-center w-full mb-8">
+      <label for="pdfInput" class="flex flex-col items-center justify-center w-full h-48 border-2 border-blue-300 border-dashed rounded-2xl cursor-pointer bg-white hover:bg-blue-50 transition-all group">
         <div class="flex flex-col items-center justify-center pt-5 pb-6">
-          <svg class="w-10 h-10 mb-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-          <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">クリックしてPDFを選択</span></p>
+          <svg class="w-12 h-12 mb-4 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+          </svg>
+          <p class="mb-2 text-lg text-gray-700"><span class="font-bold">クリックしてPDFを選択</span></p>
+          <p class="text-xs text-gray-400">またはファイルをここにドラッグ＆ドロップ</p>
         </div>
         <input id="pdfInput" type="file" accept="application/pdf" class="hidden" />
       </label>
     </div>
 
-    <div id="status" class="text-center text-blue-600 font-semibold mb-4 hidden">
+    <div id="status" class="text-center text-blue-600 font-bold mb-6 hidden animate-pulse">
       変換処理中... しばらくお待ちください。
     </div>
 
-    <div id="zipDownloadArea" class="text-center mb-8 hidden">
-      <button id="downloadZipBtn" class="px-8 py-3 bg-green-600 text-white font-bold rounded-full hover:bg-green-700 transition shadow-lg flex items-center justify-center mx-auto">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-        全ページをZIPでまとめてダウンロード
+    <div id="zipDownloadArea" class="text-center mb-10 hidden">
+      <button id="downloadZipBtn" class="px-10 py-4 bg-green-600 text-white font-black rounded-full hover:bg-green-700 transition-all shadow-xl hover:shadow-2xl flex items-center justify-center mx-auto transform hover:-translate-y-1">
+        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+        </svg>
+        すべての画像をZIPで保存
       </button>
-      <p id="zipStatus" class="text-sm text-gray-500 mt-2 hidden">ZIPファイルを作成中...</p>
+      <p id="zipStatus" class="text-sm text-gray-500 mt-3 hidden">ZIPファイルを作成しています...</p>
     </div>
 
-    <div id="outputArea" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    <div id="outputArea" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
+    
   </div>
 
-  <script type="module">
-    // 1. ES Modules形式で最新のv5ライブラリ（.mjs）をインポート
-    import * as pdfjsLib from './lib/pdf.mjs';
+  <footer class="mt-8 text-center text-gray-400 text-xs">
+    &copy; 2024 PDF to JPG Converter | Privacy Focused
+  </footer>
 
-    // 2. Workerも必ず最新の .mjs を指定する
+  <script type="module">
+    /**
+     * PDF.js v5 ESM
+     * libフォルダ内に pdf.mjs と pdf.worker.mjs を配置してください
+     */
+    import * as pdfjsLib from './lib/pdf.mjs';
     pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdf.worker.mjs';
 
     const pdfInput = document.getElementById('pdfInput');
@@ -55,24 +99,28 @@
 
     let currentZip = null; 
     let currentFileName = "";
-    let isProcessing = false; // 連続クリック防止用フラグ
+    let isProcessing = false;
 
     pdfInput.addEventListener('change', async function(e) {
       const file = e.target.files[0];
       if (!file || isProcessing) return;
 
+      // 画質・解像度設定の取得
+      const selectedScale = parseFloat(document.getElementById('scaleSetting').value);
+      const selectedQuality = parseFloat(document.getElementById('qualitySetting').value);
+
       isProcessing = true;
       pdfInput.disabled = true;
 
-      // UIの初期化
+      // 表示の初期化
       outputArea.innerHTML = '';
       zipDownloadArea.classList.add('hidden');
       statusDiv.classList.remove('hidden', 'text-green-600', 'text-red-600');
       statusDiv.classList.add('text-blue-600');
-      statusDiv.innerText = `「${file.name}」を読み込み中...`;
+      statusDiv.innerText = `読み込み中: ${file.name}`;
 
       currentFileName = file.name.replace('.pdf', '');
-      currentZip = new JSZip(); // window.JSZip はそのまま使える
+      currentZip = new JSZip(); 
       const imgFolder = currentZip.folder(currentFileName);
 
       try {
@@ -80,80 +128,80 @@
         const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
         const numPages = pdf.numPages;
 
-        statusDiv.innerText = `全${numPages}ページを変換中...`;
-
-        // 全ページをループ処理
         for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+          statusDiv.innerText = `${numPages}ページ中 ${pageNum}ページ目を変換中...`;
+
           const page = await pdf.getPage(pageNum);
           
-          const viewport = page.getViewport({scale: 2.0});
+          // 設定されたScaleを適用
+          const viewport = page.getViewport({scale: selectedScale});
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
           canvas.height = viewport.height;
           canvas.width = viewport.width;
 
-          // 【対策1】背景が透明なPDFが真っ黒になるのを防ぐため白で塗りつぶす
+          // 背景を白で塗りつぶし（透過防止）
           context.fillStyle = '#ffffff';
           context.fillRect(0, 0, canvas.width, canvas.height);
 
           await page.render({canvasContext: context, viewport: viewport}).promise;
 
-          // 【対策2】toDataURLによるメモリクラッシュを防ぐため、Blobを使用する
+          // 設定されたQualityを適用してBlob生成
           const blob = await new Promise(resolve => {
-            canvas.toBlob(resolve, 'image/jpeg', 0.9);
+            canvas.toBlob(resolve, 'image/jpeg', selectedQuality);
           });
 
           const zeroPaddedNum = String(pageNum).padStart(String(numPages).length, '0');
           const fileName = `${currentFileName}_${zeroPaddedNum}.jpg`;
 
-          // JSZipにBlobデータを直接追加（圧倒的にメモリに優しい）
+          // ZIPに追加
           imgFolder.file(fileName, blob);
 
-          // 画面表示用の処理（Blobから一時的なURLを生成）
+          // プレビュー表示用URL
           const blobUrl = URL.createObjectURL(blob);
           
           const pageContainer = document.createElement('div');
-          pageContainer.className = 'border border-gray-200 rounded-lg p-4 bg-gray-50 flex flex-col items-center';
+          pageContainer.className = 'border border-gray-100 rounded-xl p-5 bg-white shadow-sm flex flex-col items-center hover:shadow-md transition-shadow';
 
           const title = document.createElement('h3');
-          title.className = 'text-md font-medium text-gray-700 mb-2';
-          title.innerText = `${pageNum} / ${numPages} ページ`;
+          title.className = 'text-sm font-bold text-gray-500 mb-3';
+          title.innerText = `PAGE ${pageNum} / ${numPages}`;
 
           const imgPreview = document.createElement('img');
           imgPreview.src = blobUrl;
-          imgPreview.className = 'max-w-full h-auto border border-gray-300 shadow-sm mb-3';
+          imgPreview.className = 'max-w-full h-auto border border-gray-200 rounded mb-4';
           
           const singleDownloadBtn = document.createElement('a');
           singleDownloadBtn.href = blobUrl;
           singleDownloadBtn.download = fileName;
-          singleDownloadBtn.className = 'text-sm px-4 py-1 border border-blue-500 text-blue-500 rounded hover:bg-blue-50 transition';
-          singleDownloadBtn.innerText = '1枚だけ保存';
+          singleDownloadBtn.className = 'w-full text-center text-xs font-bold py-2 border-2 border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 transition';
+          singleDownloadBtn.innerText = 'このページを保存';
 
           pageContainer.appendChild(title);
           pageContainer.appendChild(imgPreview);
           pageContainer.appendChild(singleDownloadBtn);
           outputArea.appendChild(pageContainer);
 
-          // ブラウザのUIフリーズを防ぐための微小な待機
-          await new Promise(r => setTimeout(r, 10));
+          // ブラウザのUI更新を妨げないための短い待機
+          await new Promise(r => setTimeout(r, 15));
         }
 
-        statusDiv.innerText = "変換が完了しました！";
+        statusDiv.innerText = "✓ すべての変換が完了しました！";
         statusDiv.classList.replace('text-blue-600', 'text-green-600');
         zipDownloadArea.classList.remove('hidden');
 
       } catch (error) {
         console.error(error);
-        statusDiv.innerText = "エラーが発生しました。パスワード保護されたPDFなどではないかご確認ください。";
+        statusDiv.innerText = "× エラーが発生しました。ファイルが壊れているか、パスワードがかかっている可能性があります。";
         statusDiv.classList.replace('text-blue-600', 'text-red-600');
       } finally {
         isProcessing = false;
         pdfInput.disabled = false;
-        pdfInput.value = ""; // 次回同じファイルを選べるようにリセット
+        pdfInput.value = ""; 
       }
     });
 
-    // 「ZIPでまとめてダウンロード」ボタンの処理
+    // ZIPダウンロード実行
     downloadZipBtn.addEventListener('click', function() {
       if (!currentZip) return;
       
@@ -164,7 +212,7 @@
       currentZip.generateAsync({type: "blob"}).then(function(content) {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(content);
-        link.download = `${currentFileName}_images.zip`;
+        link.download = `${currentFileName}_converted.zip`;
         link.click();
         
         downloadZipBtn.disabled = false;
