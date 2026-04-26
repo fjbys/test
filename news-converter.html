@@ -1,0 +1,109 @@
+
+<html><head><meta charset="UTF-8" /><title>ニュース原稿をWeb用に変換</title>
+<script>
+function toHalfWidth(str){
+    str = str.replace(/％/g,'%');
+    str = str.replace(/．/g,'.');
+//    str = str.replace(/！/g,'!');
+//    str = str.replace(/？/g,'?');
+    return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
+            return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);}
+    );
+}
+
+function removeCRNF(str){
+	return str.replace(/\r?\n/g,"");
+}
+
+function swapKanji(str){
+	const kanji01 = document.getElementById("swapKanji01");
+	
+	if(kanji01.checked){
+		str = str.replace(/﨑/g,'崎');
+		str = str.replace(/濵/g,'浜');
+	}
+	return str;
+}
+
+function doResult01(){
+	const input = document.getElementById("originalText");
+	const result = document.getElementById("resultText");
+
+	str = toHalfWidth(input.value);
+	str = swapKanji(str);
+
+	result.value = str;
+	result.select();
+	document.execCommand("Copy");
+}
+
+function doResult02(){
+	const input = document.getElementById("originalText");
+	const result = document.getElementById("resultText");
+	str = toHalfWidth(input.value);
+	str = removeCRNF(str);
+	str = swapKanji(str);
+
+	result.value = str;
+	result.select();
+	document.execCommand("Copy");
+}
+</script>
+
+<style type="text/css">
+#container{
+	width: 640px;
+}
+#original{
+	width: 300px;
+	float: left;
+ }
+#result{
+	width: 300px;
+	float: right;
+}
+#button{
+	width: 700px;
+	margin: auto;
+}
+#processButton01{
+	width: 300px;
+	height: 50px;
+	font-size: 15px;
+	margin: 20px auto 0 auto;
+}
+#processButton02{
+	width: 300px;
+	height: 50px;
+	font-size: 15px;
+	margin: 20px auto 0 auto;
+}
+#webpush{margin: 30px auto;}
+</style>
+</head>
+<body>
+<div id="container">
+<h1>Web用に原稿をいろいろするページ。</h1>
+<p>全角や半角や諸々をして、結果をクリップボードにコピーします!!<br />
+後は、CMSでペースト(コントロール+v)するだけのお手軽仕様です。</p>
+<div id="text">
+<div id="original"><p>元</p><textarea id="originalText" rows="10" cols="30"></textarea></div>
+<div id="result"><p>結果</p><textarea id="resultText" rows="10" cols="30"></textarea></div>
+</div>
+<div id="button"><input id="processButton01" type="button" value="全角半角だけしてコピーする!" />
+<input id="processButton02" type="button" value="改行も削除してコピーする!" />
+</div>
+
+<div>
+<p style="color:red">新機能：「﨑」と「濵」を変換する</p>
+<input id="swapKanji01" type="checkbox" checked/>
+<label for="swapKanji01">「﨑」を「崎」に、「濵」を「浜」に変換する</label>
+</div>
+
+</div>
+
+<script>
+document.getElementById("processButton01").onclick = doResult01;
+document.getElementById("processButton02").onclick = doResult02;
+</script>
+</body></html>
