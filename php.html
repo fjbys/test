@@ -4,11 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PHP & HTML Formatter</title>
-    
-    <!-- Prettier CDN -->
-    <script src="https://unpkg.com/prettier@2.8.8/standalone.js"></script>
-    <script src="https://unpkg.com/prettier@2.8.8/parser-html.js"></script>
-    <script src="https://unpkg.com/@prettier/plugin-php@0.19.6/standalone.js"></script>
 
     <!-- Highlight.js (シンタックスハイライト) CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
@@ -70,13 +65,12 @@
             resize: vertical;
             box-sizing: border-box;
         }
-        /* 出力用のコード表示エリア */
         .output-wrapper {
             position: relative;
             height: 400px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            background-color: #0d1117; /* Highlight.jsの背景色に合わせる */
+            background-color: #0d1117;
             overflow: auto;
         }
         pre {
@@ -86,7 +80,6 @@
             font-size: 14px;
             background: transparent !important;
         }
-        /* コピーボタン */
         .btn-copy {
             position: absolute;
             top: 10px;
@@ -138,8 +131,13 @@
         </div>
     </div>
 
-    <script>
-        function formatCode() {
+    <script type="module">
+        import prettier from 'https://unpkg.com/prettier@3.2.5/standalone.mjs';
+        import parserHtml from 'https://unpkg.com/prettier@3.2.5/plugins/html.mjs';
+        import pluginPhp from 'https://unpkg.com/@prettier/plugin-php@0.22.2/standalone.mjs';
+
+        // HTMLのonclickから呼び出せるようにwindowオブジェクトに登録
+        window.formatCode = async function() {
             const inputCode = document.getElementById('input-code').value;
             const language = document.getElementById('language-select').value;
             const outputArea = document.getElementById('output-code');
@@ -147,40 +145,36 @@
             
             errorArea.textContent = '';
             outputArea.textContent = '';
-            outputArea.removeAttribute('data-highlighted'); // Highlight.jsの状態リセット
+            outputArea.removeAttribute('data-highlighted');
 
             if (!inputCode.trim()) return;
 
             try {
                 let formattedCode = '';
 
-                // Prettier整形処理
                 if (language === 'html') {
-                    formattedCode = prettier.format(inputCode, {
+                    formattedCode = await prettier.format(inputCode, {
                         parser: "html",
-                        plugins: prettierPlugins
+                        plugins: [parserHtml]
                     });
                 } else if (language === 'php') {
-                    formattedCode = prettier.format(inputCode, {
+                    formattedCode = await prettier.format(inputCode, {
                         parser: "php",
-                        plugins: prettierPlugins
+                        plugins: [pluginPhp]
                     });
                 }
 
-                // テキストを出力要素に反映
                 outputArea.textContent = formattedCode;
                 outputArea.className = 'language-' + language;
 
-                // シンタックスハイライトの適用
                 hljs.highlightElement(outputArea);
 
             } catch (error) {
                 errorArea.textContent = "整形エラー:\n" + error.message;
             }
-        }
+        };
 
-        // クリップボードへコピーする関数
-        function copyToClipboard() {
+        window.copyToClipboard = function() {
             const outputCode = document.getElementById('output-code').textContent;
             const copyBtn = document.getElementById('copy-btn');
 
@@ -198,7 +192,7 @@
             }).catch(err => {
                 alert('コピーに失敗しました: ' + err);
             });
-        }
+        };
     </script>
 </body>
 </html>
