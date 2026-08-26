@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>県内WEBニュース</title>
+    <style>
+      body {
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        background-color: #f2f2f7;
+        margin: 0;
+        padding: 10px;
+      }
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 5px;
+        margin-bottom: 20px;
+        padding: 0 5px;
+      }
+      h2 {
+        color: #333;
+        font-size: 1.3em;
+        margin: 0;
+      }
+      .reload-btn {
+        background-color: #007aff;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.9em;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .reload-btn:active {
+        background-color: #005bb5;
+      }
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+        font-size: 1.1em;
+      }
+      .news-card {
+        background: #fff;
+        padding: 15px;
+        margin-bottom: 12px;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      }
+      .news-meta {
+        font-size: 0.85em;
+        color: #666;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+      }
+      .station-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 5px;
+        color: #fff;
+        font-weight: bold;
+        font-size: 0.9em;
+        margin-right: 10px;
+      }
+      /* 局ごとのカラー設定 */
+      .bg-KUTV { background-color: #e91e63; }
+      .bg-RKC  { background-color: #2196f3; }
+      .bg-NHK  { background-color: #4caf50; }
+      .bg-KSS  { background-color: #ff9800; }
+      .bg-YOMIURI { background-color: #0060a8; }
+      .bg-MAINICHI { background-color: #004b98; }
+      .bg-ASAHI { background-color: #e50012; }
+      .bg-NIKKEI { background-color: #003e70; }
+      .bg-SANKEI { background-color: #c21626; }
+      .bg-NEWSKOCHI { background-color: #222222; }
+      .bg-GOGUYNET { background-color: #f39800; }
+      
+      .news-title {
+        font-size: 1.05em;
+        line-height: 1.4;
+        margin: 0;
+        font-weight: bold;
+      }
+      .news-title a {
+        color: #222;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header-container">
+      <h2>📰 高知最新ニュース速報</h2>
+      <button class="reload-btn" onclick="loadNews()">🔄 更新</button>
+    </div>
+    
+    <div id="news-container">
+      <div class="loading">ニュースを読み込んでいます...</div>
+    </div>
+
+    <script>
+      // ★ ここにあなたのGASのWEBアプリのURLを貼り付けてください
+      const API_URL = 'https://script.google.com/macros/s/あなたのGASのURL/exec?api=true';
+
+      function loadNews() {
+        const container = document.getElementById('news-container');
+        container.innerHTML = '<div class="loading">最新情報を取得中...</div>';
+
+        fetch(API_URL)
+          .then(response => response.json())
+          .then(newsList => {
+            if (!newsList || newsList.length === 0) {
+              container.innerHTML = '<div class="loading">ニュースが見つかりませんでした。</div>';
+              return;
+            }
+
+            let html = '';
+            for (let i = 0; i < newsList.length; i++) {
+              let news = newsList[i];
+              html += `
+                <div class="news-card">
+                  <div class="news-meta">
+                    <span class="station-badge bg-${news.station}">${news.station}</span>
+                    ${news.date}
+                  </div>
+                  <h3 class="news-title">
+                    <a href="${news.url}" target="_blank" rel="noopener noreferrer">${news.title}</a>
+                  </h3>
+                </div>
+              `;
+            }
+            container.innerHTML = html;
+          })
+          .catch(error => {
+            console.error(error);
+            container.innerHTML = '<div class="loading">データの取得に失敗しました。更新ボタンを押してください。</div>';
+          });
+      }
+
+      window.onload = loadNews;
+      setInterval(loadNews, 300000); // 5分ごとに自動更新
+    </script>
+  </body>
+</html>
