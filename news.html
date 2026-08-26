@@ -103,15 +103,22 @@
     </div>
 
     <script>
-      // ★ ここにあなたのGASのWEBアプリのURLを貼り付けてください
-      const API_URL = 'https://script.google.com/macros/s/AKfycbzq3ANYYvpALsD_mEkOwl-f18KrXSVkJyR3Mo8NZzUya-Ba2rEqLRmXq4iSX4m1fb-DxA/exec?api=true';
+      // ★ ここにGoogleドライブ上のJSONファイルの直接ダウンロード用URL（または公開URL）を指定します
+      // 例: 'https://drive.google.com/uc?export=download&id=あなたのファイルのID'
+      const JSON_URL = 'https://drive.google.com/uc?export=download&id=12wE5ZS7LPCKdew_E9Rqu5DtXBi02jaDb';
       
       function loadNews() {
         const container = document.getElementById('news-container');
         container.innerHTML = '<div class="loading">最新情報を取得中...</div>';
 
-        fetch(API_URL)
-          .then(response => response.json())
+        // キャッシュ回避のためのタイムスタンプを付与（常に最新のJSONを確実に取りに行くため）
+        const urlWithCacheBust = JSON_URL + '&t=' + new Date().getTime();
+
+        fetch(urlWithCacheBust)
+          .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          })
           .then(newsList => {
             if (!newsList || newsList.length === 0) {
               container.innerHTML = '<div class="loading">ニュースが見つかりませんでした。</div>';
