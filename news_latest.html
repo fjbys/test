@@ -3,22 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>高知最新ニュース速報</title>
+  <title>県内webニュース</title>
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; background: #f5f6f8; color: #222; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; }
     header { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #ddd; padding: 14px 16px; }
     .header-inner { max-width: 900px; margin: 0 auto; }
     h1 { margin: 0; font-size: 21px; font-weight: 700; }
-    .updated { margin-top: 5px; color: #777; font-size: 12px; }
     main { max-width: 900px; margin: 0 auto; padding: 10px 10px 40px; }
     #newsList { display: flex; flex-direction: column; gap: 8px; }
+    
     .news-item { display: block; background: #fff; border-radius: 10px; padding: 12px 14px; text-decoration: none; color: inherit; border: 1px solid #e8e8e8; transition: background 0.15s; }
     .news-item:hover { background: #f8f8f8; }
-    .news-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; font-size: 12px; color: #777; }
-    .station { display: inline-block; padding: 2px 7px; border-radius: 5px; background: #eee; color: #555; font-size: 11px; font-weight: 600; }
+    .news-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; color: #666; }
+    
+    /* ★ 変更点: 局バッジの基本スタイルと、各局のカラー設定 */
+    .station { display: inline-block; padding: 3px 8px; border-radius: 5px; color: #fff; font-size: 11px; font-weight: bold; }
+    .bg-KUTV { background-color: #e91e63; }
+    .bg-RKC  { background-color: #2196f3; }
+    .bg-NHK  { background-color: #4caf50; }
+    .bg-KSS  { background-color: #ff9800; }
+    .bg-YOMIURI { background-color: #0060a8; }
+    .bg-MAINICHI { background-color: #004b98; }
+    .bg-ASAHI { background-color: #e50012; }
+    .bg-NIKKEI { background-color: #003e70; }
+    .bg-SANKEI { background-color: #c21626; }
+    .bg-NEWSKOCHI { background-color: #222222; }
+    .bg-GOGUYNET { background-color: #f39800; }
+    .bg-ニュース { background-color: #999999; } /* stationが不明な場合のフォールバック */
+
     .news-title { font-size: 16px; line-height: 1.5; font-weight: 600; }
     .empty { text-align: center; padding: 40px 20px; color: #777; }
+    
     @media (max-width: 600px) {
       header { padding: 12px; }
       h1 { font-size: 19px; }
@@ -31,8 +47,7 @@
 <body>
 <header>
   <div class="header-inner">
-    <h1>高知最新ニュース速報</h1>
-    <div class="updated" id="updated">最終更新: 10:43</div>
+    <h1>県内webニュース</h1>
   </div>
 </header>
 <main>
@@ -40,700 +55,700 @@
 
     <a class="news-item" href="https://www.asahi.com/articles/ASV8W40ZXV8WOXIE01GM.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">ASAHI</span>
+        <span class="station bg-ASAHI">ASAHI</span>
         <span>Fri Aug 28 2026 10:30:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知・道の駅東洋町で「魚包」発売　具は地元特産のカツオの角煮</div>
     </a>
     <a class="news-item" href="https://kochi.goguynet.jp/2026/08/28/open_poutou_malatang/" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">GOGUYNET</span>
+        <span class="station bg-GOGUYNET">GOGUYNET</span>
         <span>Fri Aug 28 2026 09:55:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">【高知市】帯屋町商店街に薬膳 麻辣湯のお店「宝燈麻辣湯」が近日オープン！</div>
     </a>
     <a class="news-item" href="https://kochi.goguynet.jp/2026/08/28/open_poutou_malatang/" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">GOGUYNET</span>
+        <span class="station bg-GOGUYNET">GOGUYNET</span>
         <span>Fri Aug 28 2026 06:59:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">【高知市】帯屋町商店街に「宝燈麻辣湯 帯屋町店」が10月オープン！高知初「麻辣串」も♪</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027447" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Fri Aug 28 2026 06:15:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「よさこい祭り」人出は約１０２万人 前年比５万人増 高知</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027448" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Fri Aug 28 2026 05:37:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知県に熱中症警戒アラート 高知市で３３度予想</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2845809?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Fri Aug 28 2026 05:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">８月２８日（金）【高知県 交通取締情報】午前・午後　各警察署別一覧</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027446" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Thu Aug 27 2026 20:22:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">香南市 議員のパワハラ疑いで市議会に再発防止申し入れ</div>
     </a>
     <a class="news-item" href="https://www.sankei.com/article/20260827-4PHCL6YEUJPNFIIUPYBQJKMVDI/" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">SANKEI</span>
+        <span class="station bg-SANKEI">SANKEI</span>
         <span>Thu Aug 27 2026 20:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">対極の実力派女優が二人芝居　演劇ユニットのおばちゃんず「掛け合い楽しんで」</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764570" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Thu Aug 27 2026 19:25:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">全国から客が殺到する中土佐町「メジカの新子」が水揚げゼロ！？鮮魚店店主も「神頼みやね」【高知】</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764568" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Thu Aug 27 2026 19:23:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">再生数2億超え！94歳祖母の日常を撮る「ちろちゃん。」は外見・内面の美ともに世界1位【高知】</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764566" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Thu Aug 27 2026 19:17:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">室戸市で“海に映える”「ハマユウ」見頃　神奈川などで絶滅危惧の純白な姿は今週末まで【高知】</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764564" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Thu Aug 27 2026 19:16:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">【高知・香南市】百田年真市議のパワハラ調査へ　職員へ威圧的な言動を繰り返したか</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2902525?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Thu Aug 27 2026 19:14:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「関わることが嫌だった」「葬儀費を工面することもできなかった」同居兄の死体遺棄や兄の給付金だまし取った罪に問われている男に懲役３年求刑【高知】</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764562" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Thu Aug 27 2026 19:13:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">3年ぶりの大台超え！よさこい2026の人出は102万人　駐車場不足や渋滞対策が課題【高知】</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764560" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Thu Aug 27 2026 19:13:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">竹を使ったお手製流しそうめんも　奈半利町で自然と触れ合うイベント開催【高知】</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764558" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Thu Aug 27 2026 19:13:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">【高知】小学生が44年連続減少で「過去最少」に　教員1人あたり10.5人で手厚い指導なるか</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2902511?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Thu Aug 27 2026 19:06:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「クロマグロ配っているが大丈夫か」の通報きっかけに採捕禁止期間にマグロを獲ったとして書類送検された組合長ら略式起訴【高知】</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2902262?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Thu Aug 27 2026 18:58:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知の天気　28日　午後からにわか雨のところも　山岸拓気象予報士が解説</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2902501?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Thu Aug 27 2026 18:55:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">『公文書』で彩る高知の文化　設計図や広報紙など…高知県立公文書館で12月25日まで</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc2f1dbe4bb2544b568c20e4485438eeb7" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Thu Aug 27 2026 18:55:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">《土佐のfood記》室戸市の幻の伝統野菜『ぼたなす』【高知】</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2902485?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Thu Aug 27 2026 18:47:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">土佐錦魚＆ムラサキクラゲ　“ハマスイ”で珍しい金魚や紫色をしたクラゲを展示　夏休み中にぜひ見に来て！</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc2b3ce4876ebd4ecebae5db1baab37c1e" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Thu Aug 27 2026 18:39:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">《深刻な少雨》今後の見通しなど気象台に聞く【高知】</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc84b0dae05c084b0a84e1fe8fbdbac927" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Thu Aug 27 2026 18:38:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">香南市議が市職員にパワハラ 市議会が政治倫理審査会を設置【高知】</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcf83355ead7234eb5b9ff441f4229e727" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Thu Aug 27 2026 18:38:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">《爽やかな酸味と香り》ユズ産地 北川村で青ユズの収穫【高知】</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2902392?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Thu Aug 27 2026 18:35:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">目の見える人が見えない人に美術作品の魅力どう伝える？　視覚障害者と「対話」でつくる美術鑑賞</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2902474?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Thu Aug 27 2026 18:26:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">奈半利町で”流しそうめん”竹の器づくりにも挑戦　大量のそうめん30分で完食（高知）</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2902317?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Thu Aug 27 2026 18:22:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">夏休みもあとわずか！「旧御畳瀬小学校」で竹笛つくり　“廃校”卒業生と世代超えた交流</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc6502a3ba69c74161b4e89b3f22f5ca40" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Thu Aug 27 2026 17:52:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">視覚障害者と一緒に美術鑑賞を楽しむワークショップを開催【高知】</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc8b1ab24f318542109539bad1a90b5a88" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Thu Aug 27 2026 17:23:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知県の天気予報【27日午後5時発表】</div>
     </a>
     <a class="news-item" href="https://www.nikkei.com/article/DGXZQOCC2657N0W6A820C2000000/" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NIKKEI</span>
+        <span class="station bg-NIKKEI">NIKKEI</span>
         <span>Thu Aug 27 2026 17:10:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知・よさこい祭り、26年の人出は102万人　前年より5万人増</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027445" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Thu Aug 27 2026 16:12:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">閉校した小学校で音楽の体験教室 親子連れが交流深める 高知</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc7e58bf305b8c4d02aa6c53b50a28789f" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Thu Aug 27 2026 14:34:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知県津野町の土木工事業『(有)STロード』が破産開始決定受ける 負債額は約1000万円【高知】</div>
     </a>
     <a class="news-item" href="https://mainichi.jp/articles/20260825/k00/00m/040/177000c" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">MAINICHI</span>
+        <span class="station bg-MAINICHI">MAINICHI</span>
         <span>Thu Aug 27 2026 13:15:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">消防士がバス運転手に転職　人手不足の四国、各地で四苦八苦</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2900611?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Thu Aug 27 2026 12:36:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">深夜のアーケードで「のぼり旗」2本燃える⋯ライターで火つけた?25歳会社員の男を逮捕も容疑否認「街にはいたが、酒を飲んでいて⋯」</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027444" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Thu Aug 27 2026 12:08:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">視覚障害のある生徒と一緒に美術鑑賞するワークショップ 高知</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027443" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Thu Aug 27 2026 12:03:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知市の高校と大学が協定 保育や医療の人材育成に取り組む</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2900488?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Thu Aug 27 2026 11:53:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">活力ある室戸モデルの創造へ　医療・福祉事業を全国で展開する法人と室戸市が連携協定（高知）</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc15b6d3e3d14d4b2f8b1b0b677a6ac145" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Thu Aug 27 2026 11:52:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">軍隊手帳や赤紙など約90点展示　戦争と暮らし考える企画展【高知】</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcdfbb4d1259514691be9833fcc3b6affc" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Thu Aug 27 2026 11:50:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">《若者の県外流出防ごう！》高知市の高校と大学が人材育成協定【高知】</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcfa78aa11c3264f80b58ef06cda8cb110" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Thu Aug 27 2026 11:10:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知県の天気予報【27日 午前11時発表】</div>
     </a>
     <a class="news-item" href="https://www.asahi.com/articles/ASV8V3T02V8VPLPB001M.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">ASAHI</span>
+        <span class="station bg-ASAHI">ASAHI</span>
         <span>Thu Aug 27 2026 10:30:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">映画「揺さぶられる正義」29日に高知県弁護士会が上映　監督ら登壇</div>
     </a>
     <a class="news-item" href="https://www.asahi.com/articles/ASV8V3T41V8VPLPB004M.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">ASAHI</span>
+        <span class="station bg-ASAHI">ASAHI</span>
         <span>Thu Aug 27 2026 10:30:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「いざなぎ流」舞神楽を全国のライダーら鑑賞　高知・旧物部村に集う</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027442" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Thu Aug 27 2026 08:17:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">日曜市など街路市活性化へ 高知市が専用テント貸し出し始める</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027441" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Thu Aug 27 2026 08:14:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知県に熱中症警戒アラート</div>
     </a>
     <a class="news-item" href="https://kochi.goguynet.jp/2026/08/27/event_uonotana-nouryousai2026/" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">GOGUYNET</span>
+        <span class="station bg-GOGUYNET">GOGUYNET</span>
         <span>Thu Aug 27 2026 06:59:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">【高知市】毎年恒例！8月30日に魚の棚商店街で「納涼祭」開催♪</div>
     </a>
     <a class="news-item" href="https://mainichi.jp/articles/20260827/ddl/k39/040/237000c" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">MAINICHI</span>
+        <span class="station bg-MAINICHI">MAINICHI</span>
         <span>Thu Aug 27 2026 05:03:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">／5止　「罪」も「和解」も託し建立　形になった戦地への思い　／高知</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2845802?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Thu Aug 27 2026 05:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">８月２７日（木）【高知県 交通取締情報】午前・午後　各警察署別一覧</div>
     </a>
     <a class="news-item" href="https://www.yomiuri.co.jp/local/kochi/news/20260826-GYTNT00119/" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">YOMIURI</span>
+        <span class="station bg-YOMIURI">YOMIURI</span>
         <span>Thu Aug 27 2026 05:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">共生社会へ済生会と協定　室戸市　インクルーシブ就労向け</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764552" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Wed Aug 26 2026 19:11:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「中国では日本人、日本では中国人」と呼ばれ…残留日本人女性が背負い続けた孤独と“2人の母”との絆</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764550" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Wed Aug 26 2026 19:09:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知・物部川で相次ぐアユの大量死「初めての事態」　連日の猛暑・渇水による水温上昇が原因か</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764548" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Wed Aug 26 2026 19:06:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「ストレス解消、出動手当欲しさに犯行」須崎市の放火事件　22歳の元消防団員に拘禁刑6年を求刑【高知】</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764548" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Wed Aug 26 2026 19:06:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">ストレス解消、出動手当欲しさに犯行…須崎市の放火事件　22歳の元消防団員に拘禁刑6年を求刑【高知】</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764546" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Wed Aug 26 2026 19:02:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">中学校で一足早く2学期始まる　授業時間を45分に短縮、給食前の“15分勉強”で学力アップへ【高知】</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcd719479ec043458f828018eb10330e99" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Wed Aug 26 2026 18:58:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">《秋の訪れ感じて》高知県三原村でオミナエシやミソハギ咲き始める【高知】</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2899123?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Wed Aug 26 2026 18:49:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知市を拠点に活動するミュージカル劇団「GALA」公演に向け練習　初めて既存作品「銀河鉄道の夜」を演じる</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcc181fbd2b47c47bca93d2abcad7156f6" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Wed Aug 26 2026 18:49:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">《山あいの町の挑戦》地元産の木材をふんだんに使用した“仁淀川スタッドハウス”【高知】</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc6c7f5ac4d74c458284c5032b51f88cd0" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Wed Aug 26 2026 18:37:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知市のアーケード街で放火 会社員の男を逮捕【高知】</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc0e37511120ea411c84138c3a4e6610ec" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Wed Aug 26 2026 18:37:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">《四国の新幹線実現に向け、一歩前進！》JR四国社長 導入効果説明の必要性強調【高知】</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc6c7f5ac4d74c458284c5032b51f88cd0" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Wed Aug 26 2026 18:37:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知市のアーケード街で放火 会社員の男を逮捕【高知】</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2899054?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Wed Aug 26 2026 18:35:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">連携し“エッセンシャルワーカー”育成へ　高知県土佐清水市や高校・大学など4者が協定締結</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc1aefc246cf15432b82d4b647b8ec9112" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Wed Aug 26 2026 18:35:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">《珍しい紫色のクラゲ》ムラサキクラゲ桂浜水族館で展示中【高知】</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027440" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Wed Aug 26 2026 18:26:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知県の物部川でアユが大量死 猛暑と小雨で水温上昇が原因か</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2899024?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Wed Aug 26 2026 18:25:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">【解説】9月から生活道路の法定速度「６０キロ」→「３０キロ」に引き下げ　どう変わる？対象の道路は？</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2898963?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Wed Aug 26 2026 18:25:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">はりまや橋～高知城までの西向きで国道32号「電車通り」車線の運用を変更へ　工事完了の10月中旬まで夜間交通規制</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2899024?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Wed Aug 26 2026 18:25:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">【解説】9月から生活道路の法定速度「６０キロ」→「３０キロ」に引き下げ　どう変わる？対象の道路は？</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027439" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Wed Aug 26 2026 18:20:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「ＮＨＫ全国学校音楽コンクール」高知県代表の６校決まる</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027438" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Wed Aug 26 2026 18:20:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">結核の撲滅を「複十字シール運動」高知県の団体が募金呼びかけ</div>
     </a>
     <a class="news-item" href="https://www.nikkei.com/article/DGXZQOCC264TJ0W6A820C2000000/" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NIKKEI</span>
+        <span class="station bg-NIKKEI">NIKKEI</span>
         <span>Wed Aug 26 2026 18:15:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">JR四国社長「鉄道の抜本的高速化に理解を」　四国の新幹線整備で</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc0fd0f960e2a9494db9a74e44aef59484" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Wed Aug 26 2026 18:12:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">櫻井つぐみさん 大豊町の応援大使に【高知】</div>
     </a>
     <a class="news-item" href="https://www.asahi.com/articles/ASV8V0S96V8VPLPB002M.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">ASAHI</span>
+        <span class="station bg-ASAHI">ASAHI</span>
         <span>Wed Aug 26 2026 18:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「珍しいハゲ」正体は（むろと廃校水族館長コラム）</div>
     </a>
     <a class="news-item" href="https://www.asahi.com/articles/ASV8V0S96V8VPLPB002M.html" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">ASAHI</span>
+        <span class="station bg-ASAHI">ASAHI</span>
         <span>Wed Aug 26 2026 18:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「珍しいハゲ」正体は（むろと廃校水族館長コラム）</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcb6776ae9ba1b4290ba956142eed7fd8c" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Wed Aug 26 2026 17:28:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知県の天気予報【26日午後5時発表】</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcb066a9c98f4547e3bf41f35cf811e0cc" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Wed Aug 26 2026 17:06:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知県の天気予報【26日 午前11時発表】</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027437" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Wed Aug 26 2026 16:42:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">パリ五輪レスリング金の櫻井つぐみさん 大豊町の応援大使に</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027436" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Wed Aug 26 2026 12:15:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">朝ドラ「あんぱん」で描かれた戦争から平和を考える企画展</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2897168?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Wed Aug 26 2026 12:05:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">よさこい祭り人出「約１０２万人」２０２３年以来の１００万人超え　スマホ位置情報を元に推計</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2897146?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Wed Aug 26 2026 12:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「よさこい踊れてとっても楽しかった」約１か月の夏休み終え…高知市の中学校で一足早く始業式</div>
     </a>
     <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcab907aee3f404b6a83c08b2140858090" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">RKC</span>
+        <span class="station bg-RKC">RKC</span>
         <span>Wed Aug 26 2026 11:54:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">《100万人超えは3年ぶり》よさこい祭りの人出102万人【高知】</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027435" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Wed Aug 26 2026 11:19:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「高知県芸術祭」をＰＲ 中高生が書道パフォーマンス披露</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764540" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Wed Aug 26 2026 11:08:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">四国八十八ヶ所の霊場がライブ会場に　第39番札所・延光寺の本堂で《クラシック》の生演奏【高知】</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027433" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Wed Aug 26 2026 08:29:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知県地場産業大賞 企業・団体・高校生などから応募受け付け</div>
     </a>
     <a class="news-item" href="https://newskochi.net/shadowhistorykochi-20" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NEWSKOCHI</span>
+        <span class="station bg-NEWSKOCHI">NEWSKOCHI</span>
         <span>Wed Aug 26 2026 07:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知裏面史 西岡寅八郎メモワール⑳口利き相場は100万円⁉</div>
     </a>
     <a class="news-item" href="https://kochi.goguynet.jp/2026/08/26/open_ana-crowneplaza-kochi/" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">GOGUYNET</span>
+        <span class="station bg-GOGUYNET">GOGUYNET</span>
         <span>Wed Aug 26 2026 06:59:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">【高知市】「ザ クラウンパレス高知」から「ANAクラウンプラザホテル高知」へ！県内初のIHGブランドホテルが8月1日オープン！</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027434" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Wed Aug 26 2026 06:12:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知県に熱中症警戒アラート 対策徹底を</div>
     </a>
     <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2896040?display=1" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KUTV</span>
+        <span class="station bg-KUTV">KUTV</span>
         <span>Wed Aug 26 2026 06:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">橋の下に女の子、「気になって」戻ると川に流されていて…「考える暇もなく」飛び込み救助、小2女子を救った高校生の冴えた直感</div>
     </a>
     <a class="news-item" href="https://mainichi.jp/articles/20260826/ddl/k39/040/278000c" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">MAINICHI</span>
+        <span class="station bg-MAINICHI">MAINICHI</span>
         <span>Wed Aug 26 2026 05:06:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">／4　亡父の名、壁面に見つけ　帰還者が込めた思い、遺族へ　／高知</div>
     </a>
     <a class="news-item" href="https://www.yomiuri.co.jp/local/kochi/news/20260825-GYTNT00137/" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">YOMIURI</span>
+        <span class="station bg-YOMIURI">YOMIURI</span>
         <span>Wed Aug 26 2026 05:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">メジカ新子なぜ釣れない？</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764536" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Tue Aug 25 2026 19:21:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">体脂肪率6％、体の軽さが武器　箱根駅伝“鮮烈”デビューのランナー高石樹選手　地元・高知で恩返し</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764530" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Tue Aug 25 2026 19:03:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">【高知市】消費者物価指数が54カ月連続で前年同月比上回る　中東情勢の影響で食品は＋2.7%</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764528" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Tue Aug 25 2026 19:03:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">国内ではほぼ見られない希少種「ムラサキクラゲ」　高知・桂浜水族館で展示始まる</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764526" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Tue Aug 25 2026 19:01:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「早く助けないかん」　仁淀川で11歳男児を救助した中学生ら6人に感謝状【高知】</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764524" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Tue Aug 25 2026 18:59:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知のコメ農家が「再生二期作」で収益増へ　米価下落・コスト高・猛暑の“トリプルパンチ”</div>
     </a>
     <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/08/2764522" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">KSS</span>
+        <span class="station bg-KSS">KSS</span>
         <span>Tue Aug 25 2026 18:58:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知県議・戸田宗崇氏が道交法違反で罰金2万円　事故後に警察に申告せず立ち去る</div>
     </a>
     <a class="news-item" href="https://mainichi.jp/articles/20260825/k00/00m/040/242000c" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">MAINICHI</span>
+        <span class="station bg-MAINICHI">MAINICHI</span>
         <span>Tue Aug 25 2026 18:34:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">高知のダム貯水率低下、取水制限へ　徳島と香川への供給削減</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027432" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Tue Aug 25 2026 18:25:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">“四国の水がめ”早明浦ダム水位さらに低下 貯水率２７％台に</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027430" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Tue Aug 25 2026 18:25:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">スマート林業見学会 最新技術で生産性と安全性向上へ 須崎</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027429" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Tue Aug 25 2026 18:25:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">久万川で流された小学生を救助 警察が高校生に感謝状 高知</div>
     </a>
     <a class="news-item" href="https://news.web.nhk/newsweb/na/nb-8010027431" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">NHK</span>
+        <span class="station bg-NHK">NHK</span>
         <span>Tue Aug 25 2026 17:13:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">四国新幹線 早期実現に向け各県知事らが国交省に要望書提出</div>
     </a>
     <a class="news-item" href="https://mainichi.jp/articles/20260825/k00/00m/040/156000c" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">MAINICHI</span>
+        <span class="station bg-MAINICHI">MAINICHI</span>
         <span>Tue Aug 25 2026 16:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">「怖かったけど」　中学生4人組ら、川底に沈んでいた男児を救助</div>
     </a>
     <a class="news-item" href="https://www.asahi.com/articles/ASV8S3TG1V8SPLXB001M.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
-        <span class="station">ASAHI</span>
+        <span class="station bg-ASAHI">ASAHI</span>
         <span>Tue Aug 25 2026 15:00:00 GMT+0900 (Japan Standard Time)</span>
       </div>
       <div class="news-title">四国代表する2特急、全席指定席化に課題　来春に向けJRが対策へ</div>
