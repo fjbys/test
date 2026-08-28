@@ -7,9 +7,12 @@
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; background: #f5f6f8; color: #222; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; }
-    header { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #ddd; padding: 14px 16px; }
-    .header-inner { max-width: 900px; margin: 0 auto; }
-    h1 { margin: 0; font-size: 21px; font-weight: 700; }
+    
+    /* ヘッダー周りのレイアウト調整（ボタンを右端に配置） */
+    header { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #ddd; padding: 12px 16px; }
+    .header-inner { max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    h1 { margin: 0; font-size: 20px; font-weight: 700; }
+    
     main { max-width: 900px; margin: 0 auto; padding: 10px 10px 40px; }
     #newsList { display: flex; flex-direction: column; gap: 8px; }
     
@@ -34,9 +37,17 @@
     .news-title { font-size: 16px; line-height: 1.5; font-weight: 600; }
     .empty { text-align: center; padding: 40px 20px; color: #777; }
     
+    /* ★追加：更新ボタンのデザイン */
+    .reload-btn { background-color: #007aff; color: white; border: none; padding: 7px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .reload-btn:active { background-color: #005bb5; }
+    
+    /* ★追加：一番下のボタン用のコンテナ */
+    .bottom-action { text-align: center; margin-top: 24px; padding-bottom: 20px; }
+    .bottom-action .reload-btn { padding: 12px 24px; font-size: 15px; border-radius: 8px; }
+    
     @media (max-width: 600px) {
-      header { padding: 12px; }
-      h1 { font-size: 19px; }
+      header { padding: 10px 12px; }
+      h1 { font-size: 18px; }
       main { padding: 8px 7px 30px; }
       .news-item { padding: 11px 12px; }
       .news-title { font-size: 15px; }
@@ -47,11 +58,20 @@
 <header>
   <div class="header-inner">
     <h1>県内webニュース</h1>
+    <!-- ★上部の更新ボタン -->
+    <button class="reload-btn" onclick="location.reload()">🔄 更新</button>
   </div>
 </header>
 <main>
   <div id="newsList">
 
+    <a class="news-item" href="https://www.nikkei.com/article/DGXZQOCC213DR0R20C26A8000000/" target="_blank" rel="noopener noreferrer">
+      <div class="news-meta">
+        <span class="station bg-NIKKEI">NIKKEI</span>
+        <span>8/28 11:00</span>
+      </div>
+      <div class="news-title">地域密着ビジネス、香川・小豆島で続々　岡山・井原はデニムを観光に</div>
+    </a>
     <a class="news-item" href="https://www.asahi.com/articles/ASV8W40ZXV8WOXIE01GM.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
       <div class="news-meta">
         <span class="station bg-ASAHI">ASAHI</span>
@@ -745,13 +765,10 @@
       </div>
       <div class="news-title">「怖かったけど」　中学生4人組ら、川底に沈んでいた男児を救助</div>
     </a>
-    <a class="news-item" href="https://www.asahi.com/articles/ASV8S3TG1V8SPLXB001M.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
-      <div class="news-meta">
-        <span class="station bg-ASAHI">ASAHI</span>
-        <span>8/25 15:00</span>
-      </div>
-      <div class="news-title">四国代表する2特急、全席指定席化に課題　来春に向けJRが対策へ</div>
-    </a>
+  </div>
+  <!-- ★下部の更新ボタン -->
+  <div class="bottom-action">
+    <button class="reload-btn" onclick="location.reload()">🔄 最新の状態に更新する</button>
   </div>
 </main>
 </body>
