@@ -2,159 +2,218 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>DaVinci to EDIUS XML Converter (Advanced)</title>
+    <title>DaVinci to EDIUS XML Converter (パス変換対応)</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
         .container { max-width: 700px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         h1 { font-size: 1.2em; color: #333; }
         p { font-size: 0.9em; color: #666; }
         input[type="file"] { margin: 20px 0; }
-        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1em; }
+        button { background-color: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; }
         button:hover { background-color: #0056b3; }
-        #logArea { margin-top: 20px; padding: 15px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 4px; display: none; }
-        #logArea h2 { font-size: 1em; margin-top: 0; }
+        
+        .box { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .config-box { background: #e9ecef; border: 1px solid #ced4da; display: none; }
+        .log-box { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; display: none; }
+        
+        input[type="text"] { width: 100%; padding: 8px; margin: 5px 0 15px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .help-text { font-size: 0.85em; color: #555; margin-bottom: 5px; }
         ul { margin: 0; padding-left: 20px; font-size: 0.9em; }
-        li { margin-bottom: 5px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>60i(59.94i) → 30p(29.97p) XML変換ツール (奇数検知機能付き)</h1>
-        <p>XMLを読み込み、EDIUS用にフレームレートを変換します。<br>奇数フレームによる丸め誤差が発生した箇所はリストアップされます。</p>
+        <h1>60i → 30p XML変換ツール ＆ パス自動変換</h1>
+        <p>XMLを選択すると、プロジェクト内のファイルパスが表示されます。</p>
         
         <input type="file" id="xmlFile" accept=".xml">
-        <br>
+        
+        <!-- パス変換設定エリア -->
+        <div id="pathConfig" class="box config-box">
+            <h3 style="margin-top:0;">フォルダパスの書き換え (OS間の移動用)</h3>
+            
+            <div class="help-text">現在のフォルダ（XMLから自動検出）：</div>
+            <input type="text" id="oldPath" readonly style="background-color: #e2e3e5; color: #383d41;">
+            
+            <div class="help-text">
+                新しいフォルダパス（変更しない場合は空欄のままでOK）:<br>
+                ※ Windowsのフォルダパス（例: <code>D:\動画素材\おらんく</code>）をそのまま貼り付けられます。
+            </div>
+            <input type="text" id="newPath" placeholder="例: D:\動画素材\おらんく">
+        </div>
+
         <button id="convertBtn">変換してダウンロード</button>
 
-        <div id="logArea">
-            <h2>⚠️ 奇数フレーム検出レポート（要・手動確認）</h2>
-            <p>以下の箇所で丸め処理が行われました。EDIUSインポート後、最大1/30秒のズレがないか確認を推奨します。</p>
+        <!-- ログ出力エリア -->
+        <div id="logArea" class="box log-box">
+            <h3 style="margin-top:0;">⚠️ 奇数フレーム検出レポート</h3>
+            <p>以下の箇所で丸め処理が行われました。EDIUS上で最大1/30秒のズレがないか確認してください。</p>
             <ul id="logList"></ul>
         </div>
     </div>
 
     <script>
+        const fileInput = document.getElementById('xmlFile');
+        const pathConfig = document.getElementById('pathConfig');
+        const oldPathInput = document.getElementById('oldPath');
+        const newPathInput = document.getElementById('newPath');
+        
+        let loadedXmlText = "";
+        let originalPathUrlRaw = ""; // XML内の生のプレフィックス
+
+        // ファイルが選択されたら先読みしてパスを検出
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length === 0) {
+                pathConfig.style.display = 'none';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                loadedXmlText = evt.target.result;
+                const match = loadedXmlText.match(/<pathurl>(.*?)<\/pathurl>/);
+                if (match) {
+                    const fullUrl = match[1];
+                    const lastSlash = fullUrl.lastIndexOf('/');
+                    if (lastSlash !== -1) {
+                        originalPathUrlRaw = fullUrl.substring(0, lastSlash + 1);
+                        // 人間が読めるようにデコードし、不要な接頭辞を隠す
+                        let displayPath = decodeURIComponent(originalPathUrlRaw);
+                        displayPath = displayPath.replace(/^file:\/\/\/?(localhost\/)?/, '');
+                        
+                        oldPathInput.value = displayPath;
+                        newPathInput.value = ""; // リセット
+                        pathConfig.style.display = 'block';
+                    }
+                }
+            };
+            reader.readAsText(e.target.files[0]);
+        });
+
+        // 変換処理
         document.getElementById('convertBtn').addEventListener('click', () => {
-            const fileInput = document.getElementById('xmlFile');
-            if (fileInput.files.length === 0) {
+            if (!loadedXmlText) {
                 alert('XMLファイルを選択してください。');
                 return;
             }
 
-            const file = fileInput.files[0];
-            const reader = new FileReader();
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(loadedXmlText, "text/xml");
+            
+            // --- 1. パス(pathurl)の変換処理 ---
+            const newPathRaw = newPathInput.value.trim();
+            if (newPathRaw) {
+                // WindowsパスをXML仕様(URI)にフォーマット
+                let p = newPathRaw.replace(/\\/g, '/'); // バックスラッシュをスラッシュに
+                if (!p.endsWith('/')) p += '/';
+                
+                // 接頭辞の付与
+                if (!p.startsWith('file://')) {
+                    p = p.startsWith('/') ? 'file://' + p : 'file:///' + p;
+                }
+
+                // フォルダ名をURLエンコード (C:/ などは除外)
+                const parts = p.split('/');
+                const encodedParts = parts.map(part => {
+                    if (part === "file:" || part === "" || part.match(/^[a-zA-Z]:$/)) return part;
+                    return encodeURIComponent(part);
+                });
+                const newPrefix = encodedParts.join('/');
+
+                // XML内のすべての pathurl のディレクトリ部分を差し替え
+                const pathurls = xmlDoc.getElementsByTagName("pathurl");
+                for (let i = 0; i < pathurls.length; i++) {
+                    const fullUrl = pathurls[i].textContent;
+                    const lastSlash = fullUrl.lastIndexOf('/');
+                    if (lastSlash !== -1) {
+                        const fileName = fullUrl.substring(lastSlash + 1);
+                        pathurls[i].textContent = newPrefix + fileName;
+                    }
+                }
+            }
+
+            // --- 2. タイムベースとフレームレートの半減処理 ---
+            const timebases = xmlDoc.getElementsByTagName("timebase");
+            for (let i = 0; i < timebases.length; i++) {
+                if (timebases[i].textContent === "60") timebases[i].textContent = "30";
+            }
+
             const logList = document.getElementById('logList');
             const logArea = document.getElementById('logArea');
-            logList.innerHTML = ''; // ログ初期化
+            logList.innerHTML = '';
             let hasOddFrames = false;
 
-            // 秒数計算用 (59.94fps基準)
             const getSeconds = (frames) => (frames / 59.94).toFixed(2);
 
-            reader.onload = function(e) {
-                const xmlText = e.target.result;
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
-                // 1. timebaseの書き換え
-                const timebases = xmlDoc.getElementsByTagName("timebase");
-                for (let i = 0; i < timebases.length; i++) {
-                    if (timebases[i].textContent === "60") timebases[i].textContent = "30";
-                }
-
-                // 2. クリップごとの処理 (整合性を保つための再計算とログ出力)
-                const clipitems = Array.from(xmlDoc.getElementsByTagName("clipitem"));
+            const clipitems = Array.from(xmlDoc.getElementsByTagName("clipitem"));
+            clipitems.forEach(clip => {
+                const clipName = clip.getElementsByTagName("name")[0]?.textContent || "Unknown";
                 
-                clipitems.forEach(clip => {
-                    const clipName = clip.getElementsByTagName("name")[0]?.textContent || "Unknown Clip";
-                    const clipId = clip.getAttribute("id") || "No ID";
-                    
-                    const getVal = (tagName) => {
-                        const el = clip.getElementsByTagName(tagName)[0];
-                        return el ? parseInt(el.textContent, 10) : NaN;
-                    };
+                const getVal = (tag) => {
+                    const el = clip.getElementsByTagName(tag)[0];
+                    return el ? parseInt(el.textContent, 10) : NaN;
+                };
+                const setVal = (tag, val) => {
+                    const el = clip.getElementsByTagName(tag)[0];
+                    if (el && !isNaN(val)) el.textContent = val.toString();
+                };
 
-                    const setVal = (tagName, value) => {
-                        const el = clip.getElementsByTagName(tagName)[0];
-                        if (el && !isNaN(value)) el.textContent = value.toString();
-                    };
+                const start = getVal("start");
+                const end = getVal("end");
+                const inPoint = getVal("in");
+                const outPoint = getVal("out");
 
-                    const start = getVal("start");
-                    const end = getVal("end");
-                    const inPoint = getVal("in");
-                    const outPoint = getVal("out");
-
-                    // 奇数チェックとログ記録
-                    [
-                        { name: "start", val: start },
-                        { name: "end", val: end },
-                        { name: "in", val: inPoint },
-                        { name: "out", val: outPoint }
-                    ].forEach(item => {
-                        if (!isNaN(item.val) && item.val !== -1 && item.val % 2 !== 0) {
-                            hasOddFrames = true;
-                            const li = document.createElement('li');
-                            li.innerHTML = `<strong>${clipName}</strong> (${clipId}) の <code>${item.name}</code> が奇数です (元の値: <b>${item.val}</b>フレーム, 約 <b>${getSeconds(item.val)}秒</b> 地点)`;
-                            logList.appendChild(li);
-                        }
-                    });
-
-                    // 丸め処理と再計算
-                    if (!isNaN(start) && !isNaN(end) && start !== -1 && end !== -1) {
-                        const newStart = Math.round(start / 2);
-                        const newEnd = Math.round(end / 2);
-                        const newDuration = newEnd - newStart;
-                        
-                        setVal("start", newStart);
-                        setVal("end", newEnd);
-                        setVal("duration", newDuration);
-                    }
-
-                    if (!isNaN(inPoint) && !isNaN(outPoint) && inPoint !== -1 && outPoint !== -1) {
-                        const newIn = Math.round(inPoint / 2);
-                        const newOut = Math.round(outPoint / 2);
-                        
-                        setVal("in", newIn);
-                        setVal("out", newOut);
+                // 奇数検知
+                [{ n: "start", v: start }, { n: "end", v: end }, { n: "in", v: inPoint }, { n: "out", v: outPoint }].forEach(item => {
+                    if (!isNaN(item.v) && item.v !== -1 && item.v % 2 !== 0) {
+                        hasOddFrames = true;
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>${clipName}</strong> の <code>${item.n}</code> (元: <b>${item.v}</b>F, 約 <b>${getSeconds(item.v)}秒</b>)`;
+                        logList.appendChild(li);
                     }
                 });
 
-                // クリップ以外の独立した duration, frame も丸め処理
-                ['duration', 'frame'].forEach(tag => {
-                    const elements = Array.from(xmlDoc.getElementsByTagName(tag));
-                    elements.forEach(el => {
-                        // 子要素を持たないテキストノードのみ処理
-                        if (el.children.length === 0) {
-                            let val = parseInt(el.textContent, 10);
-                            if (!isNaN(val) && val !== -1) {
-                                el.textContent = Math.round(val / 2).toString();
-                            }
-                        }
-                    });
-                });
-
-                // 奇数があったらレポート表示
-                logArea.style.display = hasOddFrames ? 'block' : 'none';
-
-                // XMLダウンロード
-                const serializer = new XMLSerializer();
-                let newXmlString = serializer.serializeToString(xmlDoc);
-                if (!newXmlString.startsWith("<?xml")) {
-                    newXmlString = '<?xml version="1.0" encoding="UTF-8"?>\n' + newXmlString;
+                // 丸めと再計算
+                if (!isNaN(start) && !isNaN(end) && start !== -1 && end !== -1) {
+                    const newStart = Math.round(start / 2);
+                    const newEnd = Math.round(end / 2);
+                    setVal("start", newStart);
+                    setVal("end", newEnd);
+                    setVal("duration", newEnd - newStart);
                 }
+                if (!isNaN(inPoint) && !isNaN(outPoint) && inPoint !== -1 && outPoint !== -1) {
+                    setVal("in", Math.round(inPoint / 2));
+                    setVal("out", Math.round(outPoint / 2));
+                }
+            });
 
-                const blob = new Blob([newXmlString], { type: 'text/xml' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = file.name.replace('.xml', '_30fps_converted.xml');
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            };
+            // 独立タグの丸め
+            ['duration', 'frame'].forEach(tag => {
+                Array.from(xmlDoc.getElementsByTagName(tag)).forEach(el => {
+                    if (el.children.length === 0) {
+                        let val = parseInt(el.textContent, 10);
+                        if (!isNaN(val) && val !== -1) el.textContent = Math.round(val / 2).toString();
+                    }
+                });
+            });
 
-            reader.readAsText(file);
+            logArea.style.display = hasOddFrames ? 'block' : 'none';
+
+            // --- 3. ダウンロード処理 ---
+            const serializer = new XMLSerializer();
+            let newXmlString = serializer.serializeToString(xmlDoc);
+            if (!newXmlString.startsWith("<?xml")) {
+                newXmlString = '<?xml version="1.0" encoding="UTF-8"?>\n' + newXmlString;
+            }
+
+            const blob = new Blob([newXmlString], { type: 'text/xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileInput.files[0].name.replace('.xml', '_converted.xml');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         });
     </script>
 </body>
