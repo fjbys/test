@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Resolve → EDIUS XML変換</title>
+<style>
+  :root{color-scheme:light dark;--bg:#f4f6fa;--panel:#fff;--text:#172033;--muted:#687386;--line:#dce2ec;--accent:#3859d8;--accent2:#eaf0ff;--good:#18794e;--warn:#9a5a00}
+  @media(prefers-color-scheme:dark){:root{--bg:#111521;--panel:#1a2030;--text:#edf1fa;--muted:#aab4c6;--line:#30394d;--accent:#91a7ff;--accent2:#252f4b;--good:#6bd6a0;--warn:#ffc36b}}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:850px;margin:0 auto;padding:32px 18px 56px}
+  header{margin-bottom:24px}h1{font-size:clamp(24px,5vw,34px);line-height:1.2;margin:0 0 10px}p{margin:8px 0;color:var(--muted)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;margin:16px 0;box-shadow:0 5px 24px #00000008}
+  .drop{border:2px dashed var(--line);border-radius:14px;padding:28px 16px;text-align:center;transition:.15s}
+  .drop.drag{border-color:var(--accent);background:var(--accent2)}
+  .drop strong{display:block;font-size:18px;margin-bottom:5px}
+  button,.filebtn{border:0;border-radius:11px;background:var(--accent);color:white;font-weight:700;padding:12px 18px;cursor:pointer;font:inherit;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+  button:disabled{opacity:.4;cursor:not-allowed}.secondary{background:var(--accent2);color:var(--text);border:1px solid var(--line)}
+  input[type=file]{display:none}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
+  .filename{font-size:14px;color:var(--muted);margin-top:12px;overflow-wrap:anywhere}
+  .status{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--accent2);display:none}
+  .status.error{background:#ffe9e7;color:#8c2418}.status.success{color:var(--good)}
+  .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+  .stat{border:1px solid var(--line);border-radius:12px;padding:13px}.stat small{display:block;color:var(--muted);font-size:12px}.stat b{font-size:19px;display:block;margin-top:4px;overflow-wrap:anywhere}
+  h2{font-size:19px;margin:0 0 12px}.note{font-size:13px}.pill{display:inline-block;border-radius:99px;background:var(--accent2);padding:3px 9px;font-size:12px;color:var(--text);font-weight:700}
+  ul{padding-left:21px;margin:10px 0}li{margin:6px 0}footer{color:var(--muted);font-size:12px;margin-top:22px}
+  @media(max-width:540px){main{padding:22px 12px 40px}.panel{padding:16px}.stats{grid-template-columns:1fr}.actions button,.actions label{flex:1}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <span class="pill">ローカル動作・単一HTML</span>
+    <h1>Resolve → EDIUS<br>XML変換ツール</h1>
+    <p>DaVinci Resolveから書き出したXMLを、29.97fps（30/1.001）向けのXMLに変換します。ファイルはブラウザ内で処理し、外部へ送信しません。</p>
+  </header>
+
+  <section class="panel">
+    <h2>1. XMLファイルを読み込む</h2>
+    <div class="drop" id="drop">
+      <strong>XMLをここにドラッグ＆ドロップ</strong>
+      <p>または、ファイルを選択してください。</p>
+      <div class="actions" style="justify-content:center">
+        <label class="filebtn" for="file">XMLを選択</label>
+        <input id="file" type="file" accept=".xml,text/xml,application/xml">
+      </div>
+      <div class="filename" id="filename">ファイル未選択</div>
+    </div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <div id="stats" class="stats" hidden>
+      <div class="stat"><small>読み込み時のtimebase</small><b id="oldRate">—</b></div>
+      <div class="stat"><small>変換後のtimebase</small><b>30 / NTSC</b></div>
+      <div class="stat"><small>シーケンス尺（目安）</small><b id="duration">—</b></div>
+    </div>
+    <div class="actions">
+      <button id="convert" disabled>29.97fps用XMLに変換</button>
+      <button id="download" class="secondary" disabled>変換XMLを保存</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>2. 変換ルール</h2>
+    <ul>
+      <li><b>レート：</b>XML内の <code>timebase=60</code> を <code>30</code> に変更し、NTSCフラグは維持します。</li>
+      <li><b>フレーム値：</b>duration / start / end / in / out / frame の数値を2分の1に丸めます。</li>
+      <li><b>素材パス：</b>変更しません。読み込み先PCで素材の再リンクが必要な場合があります。</li>
+    </ul>
+    <p class="note">※ 試作版です。元XMLのフレーム数を機械的に半分にする方式のため、素材のイン／アウト、音声同期、重ね合わせ、端数フレームの扱いが意図どおりかはEDIUSで確認してください。元ファイルは上書きしません。</p>
+  </section>
+  <footer>オフラインで動作する単一HTMLです。Chrome / Edge / Safariなど、File APIとXML DOMに対応したブラウザで開いてください。</footer>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let originalName = "";
+  let convertedText = "";
+  let sourceXml = "";
+  let outputName = "converted_29.97fps.xml";
+  const frameTags = new Set(["duration","start","end","in","out","frame"]);
+
+  function showStatus(message, type="") {
+    const el = $("status");
+    el.textContent = message;
+    el.className = "status" + (type ? " " + type : "");
+    el.style.display = "block";
+  }
+  function hideStatus() { $("status").style.display = "none"; }
+  function parseXml(text) {
+    const doc = new DOMParser().parseFromString(text, "application/xml");
+    if (doc.querySelector("parsererror")) throw new Error("XMLを解析できません。正しいXMLファイルか確認してください。");
+    if (doc.documentElement?.tagName !== "xmeml") throw new Error("XMEML形式ではないようです。DaVinci Resolveから書き出したXMLを選んでください。");
+    return doc;
+  }
+  function rateInfo(doc) {
+    return [...doc.getElementsByTagName("timebase")].map(n => n.textContent.trim()).filter(Boolean);
+  }
+  function approxDuration(doc) {
+    const sequence = doc.querySelector("sequence");
+    const d = sequence?.querySelector(":scope > duration")?.textContent?.trim();
+    if (!d || !Number.isFinite(Number(d))) return null;
+    const rateNode = sequence.querySelector(":scope > rate");
+    const tb = Number(rateNode?.querySelector("timebase")?.textContent || 60);
+    const ntsc = rateNode?.querySelector("ntsc")?.textContent?.trim().toUpperCase() === "TRUE";
+    const fps = ntsc ? tb * 1000/1001 : tb;
+    return Number(d) / fps;
+  }
+  function fmtSeconds(s) {
+    if (s == null) return "—";
+    return s.toFixed(3) + " 秒";
+  }
+  function loadText(text, name) {
+    hideStatus();
+    const doc = parseXml(text);
+    const rates = rateInfo(doc);
+    if (!rates.includes("60")) {
+      throw new Error("timebase=60 が見つかりません。すでに変換済みか、別形式のXMLの可能性があります。");
+    }
+    sourceXml = text;
+    originalName = name;
+    outputName = name.replace(/\.xml$/i, "") + "_29.97fps.xml";
+    $("filename").textContent = name;
+    $("oldRate").textContent = rates.includes("60") ? "60 / NTSC（約59.94）" : rates.join(", ");
+    $("duration").textContent = fmtSeconds(approxDuration(doc));
+    $("stats").hidden = false;
+    $("convert").disabled = false;
+    $("download").disabled = true;
+    convertedText = "";
+    showStatus("XMLを読み込みました。内容を確認して「変換」を押してください。", "success");
+  }
+  function convert() {
+    const doc = parseXml(sourceXml);
+    let rateChanges = 0, frameChanges = 0;
+    for (const n of doc.getElementsByTagName("timebase")) {
+      if (n.textContent.trim() === "60") {
+        n.textContent = "30";
+        rateChanges++;
+      }
+    }
+    const all = doc.getElementsByTagName("*");
+    for (const n of all) {
+      if (!frameTags.has(n.tagName.toLowerCase())) continue;
+      const raw = (n.textContent || "").trim();
+      if (!/^-?\d+$/.test(raw)) continue;
+      const val = Number(raw);
+      if (val < 0) continue; // keep special negative values
+      const next = String(Math.floor((val + 1) / 2));
+      if (next !== raw) {
+        n.textContent = next;
+        frameChanges++;
+      }
+    }
+    const serialized = new XMLSerializer().serializeToString(doc);
+    convertedText = '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE xmeml>\n' + serialized;
+    $("download").disabled = false;
+    showStatus(`変換できました。timebase変更 ${rateChanges}箇所、フレーム値変更 ${frameChanges}箇所。保存してEDIUSで読み込んでください。`, "success");
+  }
+  function download() {
+    if (!convertedText) return;
+    const blob = new Blob([convertedText], {type:"application/xml;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = outputName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  $("file").addEventListener("change", async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try { loadText(await file.text(), file.name); }
+    catch (err) { showStatus(err.message || String(err), "error"); $("convert").disabled = true; $("download").disabled = true; }
+  });
+  $("convert").addEventListener("click", () => {
+    try { convert(); }
+    catch (err) { showStatus(err.message || String(err), "error"); }
+  });
+  $("download").addEventListener("click", download);
+
+  const drop = $("drop");
+  ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.classList.add("drag");
+  }));
+  ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.classList.remove("drag");
+  }));
+  drop.addEventListener("drop", async e => {
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+    try { loadText(await file.text(), file.name); }
+    catch (err) { showStatus(err.message || String(err), "error"); $("convert").disabled = true; $("download").disabled = true; }
+  });
+})();
+</script>
+</body>
+</html>
