@@ -2,25 +2,35 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>DaVinci to EDIUS XML Converter</title>
+    <title>DaVinci to EDIUS XML Converter (Advanced)</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
-        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { max-width: 700px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         h1 { font-size: 1.2em; color: #333; }
         p { font-size: 0.9em; color: #666; }
         input[type="file"] { margin: 20px 0; }
         button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1em; }
         button:hover { background-color: #0056b3; }
+        #logArea { margin-top: 20px; padding: 15px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 4px; display: none; }
+        #logArea h2 { font-size: 1em; margin-top: 0; }
+        ul { margin: 0; padding-left: 20px; font-size: 0.9em; }
+        li { margin-bottom: 5px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>60i(59.94i) XML → 30p(29.97p) 変換ツール</h1>
-        <p>DaVinci Resolveで書き出した60fps基準のXMLを、EDIUSの30fpsプロジェクトで読み込めるように変換します。<br>※ timebaseを30にし、各フレーム数を1/2に補正します。</p>
+        <h1>60i(59.94i) → 30p(29.97p) XML変換ツール (奇数検知機能付き)</h1>
+        <p>XMLを読み込み、EDIUS用にフレームレートを変換します。<br>奇数フレームによる丸め誤差が発生した箇所はリストアップされます。</p>
         
         <input type="file" id="xmlFile" accept=".xml">
         <br>
         <button id="convertBtn">変換してダウンロード</button>
+
+        <div id="logArea">
+            <h2>⚠️ 奇数フレーム検出レポート（要・手動確認）</h2>
+            <p>以下の箇所で丸め処理が行われました。EDIUSインポート後、最大1/30秒のズレがないか確認を推奨します。</p>
+            <ul id="logList"></ul>
+        </div>
     </div>
 
     <script>
@@ -33,51 +43,111 @@
 
             const file = fileInput.files[0];
             const reader = new FileReader();
+            const logList = document.getElementById('logList');
+            const logArea = document.getElementById('logArea');
+            logList.innerHTML = ''; // ログ初期化
+            let hasOddFrames = false;
+
+            // 秒数計算用 (59.94fps基準)
+            const getSeconds = (frames) => (frames / 59.94).toFixed(2);
 
             reader.onload = function(e) {
                 const xmlText = e.target.result;
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "text/xml");
 
-                // 1. timebaseの 60 を 30 に変換
+                // 1. timebaseの書き換え
                 const timebases = xmlDoc.getElementsByTagName("timebase");
                 for (let i = 0; i < timebases.length; i++) {
-                    if (timebases[i].textContent === "60") {
-                        timebases[i].textContent = "30";
-                    }
+                    if (timebases[i].textContent === "60") timebases[i].textContent = "30";
                 }
 
-                // 2. フレーム数を示すタグの値を半分にする
-                // 対象: duration, start, end, in, out, frame
-                const targetTags = ['duration', 'start', 'end', 'in', 'out', 'frame'];
+                // 2. クリップごとの処理 (整合性を保つための再計算とログ出力)
+                const clipitems = Array.from(xmlDoc.getElementsByTagName("clipitem"));
                 
-                targetTags.forEach(tag => {
-                    const elements = xmlDoc.getElementsByTagName(tag);
-                    for (let i = 0; i < elements.length; i++) {
-                        let val = parseInt(elements[i].textContent, 10);
-                        // 値が数値であり、かつ -1 (シーケンス全体のin/outなどで使われる特殊値) ではない場合
-                        if (!isNaN(val) && val !== -1) {
-                            // 2で割って切り捨て (1フレームの端数が出た場合の安全策)
-                            elements[i].textContent = Math.floor(val / 2).toString();
+                clipitems.forEach(clip => {
+                    const clipName = clip.getElementsByTagName("name")[0]?.textContent || "Unknown Clip";
+                    const clipId = clip.getAttribute("id") || "No ID";
+                    
+                    const getVal = (tagName) => {
+                        const el = clip.getElementsByTagName(tagName)[0];
+                        return el ? parseInt(el.textContent, 10) : NaN;
+                    };
+
+                    const setVal = (tagName, value) => {
+                        const el = clip.getElementsByTagName(tagName)[0];
+                        if (el && !isNaN(value)) el.textContent = value.toString();
+                    };
+
+                    const start = getVal("start");
+                    const end = getVal("end");
+                    const inPoint = getVal("in");
+                    const outPoint = getVal("out");
+
+                    // 奇数チェックとログ記録
+                    [
+                        { name: "start", val: start },
+                        { name: "end", val: end },
+                        { name: "in", val: inPoint },
+                        { name: "out", val: outPoint }
+                    ].forEach(item => {
+                        if (!isNaN(item.val) && item.val !== -1 && item.val % 2 !== 0) {
+                            hasOddFrames = true;
+                            const li = document.createElement('li');
+                            li.innerHTML = `<strong>${clipName}</strong> (${clipId}) の <code>${item.name}</code> が奇数です (元の値: <b>${item.val}</b>フレーム, 約 <b>${getSeconds(item.val)}秒</b> 地点)`;
+                            logList.appendChild(li);
                         }
+                    });
+
+                    // 丸め処理と再計算
+                    if (!isNaN(start) && !isNaN(end) && start !== -1 && end !== -1) {
+                        const newStart = Math.round(start / 2);
+                        const newEnd = Math.round(end / 2);
+                        const newDuration = newEnd - newStart;
+                        
+                        setVal("start", newStart);
+                        setVal("end", newEnd);
+                        setVal("duration", newDuration);
+                    }
+
+                    if (!isNaN(inPoint) && !isNaN(outPoint) && inPoint !== -1 && outPoint !== -1) {
+                        const newIn = Math.round(inPoint / 2);
+                        const newOut = Math.round(outPoint / 2);
+                        
+                        setVal("in", newIn);
+                        setVal("out", newOut);
                     }
                 });
 
-                // XML文字列に再変換
+                // クリップ以外の独立した duration, frame も丸め処理
+                ['duration', 'frame'].forEach(tag => {
+                    const elements = Array.from(xmlDoc.getElementsByTagName(tag));
+                    elements.forEach(el => {
+                        // 子要素を持たないテキストノードのみ処理
+                        if (el.children.length === 0) {
+                            let val = parseInt(el.textContent, 10);
+                            if (!isNaN(val) && val !== -1) {
+                                el.textContent = Math.round(val / 2).toString();
+                            }
+                        }
+                    });
+                });
+
+                // 奇数があったらレポート表示
+                logArea.style.display = hasOddFrames ? 'block' : 'none';
+
+                // XMLダウンロード
                 const serializer = new XMLSerializer();
                 let newXmlString = serializer.serializeToString(xmlDoc);
-
-                // DOMParserを通すとXML宣言が消えることがあるため補完
                 if (!newXmlString.startsWith("<?xml")) {
                     newXmlString = '<?xml version="1.0" encoding="UTF-8"?>\n' + newXmlString;
                 }
 
-                // ダウンロード処理
                 const blob = new Blob([newXmlString], { type: 'text/xml' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = file.name.replace('.xml', '_30fps.xml');
+                a.download = file.name.replace('.xml', '_30fps_converted.xml');
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
