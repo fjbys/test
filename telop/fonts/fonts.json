@@ -1,8 +1,9 @@
 [
   {
-    "id": "noto_sans_jp",
     "name": "Noto Sans JP",
-    "file": "NotoSansJP-Regular.ttf",
+    "file": "noto_sans_jp/NotoSansJP-VariableFont_wght.ttf",
+    "ui": true,
     "default": true
   }
 ]
+
