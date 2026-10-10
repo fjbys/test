@@ -2,12 +2,12 @@
   {
     "name": "Noto Sans JP",
     "file": "Noto_Sans_JP/NotoSansJP-VariableFont_wght.ttf",
-    "ui": true
+    "ui": true,
+    "default": true
   },
   {
     "name": "Dela Gothic One",
-    "file": "Dela_Gothic_One/DelaGothicOne-Regular.ttf",
-    "default": true
+    "file": "Dela_Gothic_One/DelaGothicOne-Regular.ttf"
   },
   {
     "name": "LINE Seed JP",
