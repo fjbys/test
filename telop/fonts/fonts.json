@@ -60,6 +60,11 @@
   {
     "name": "DelaSukoGothic",
     "file": "DelaSukoGothic/DelaSukoGothicOne-R.otf"
+  },
+  {
+    "name": "k-font",
+    "file": "k-font/keifont.ttf"
   }
-  
+
+
 ]
