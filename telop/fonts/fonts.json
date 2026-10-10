@@ -1,9 +1,56 @@
 [
   {
     "name": "Noto Sans JP",
-    "file": "noto_sans_jp/NotoSansJP-VariableFont_wght.ttf",
-    "ui": true,
+    "file": "Noto_Sans_JP/NotoSansJP-VariableFont_wght.ttf",
+    "ui": true
+  },
+  {
+    "name": "Dela Gothic One",
+    "file": "Dela_Gothic_One/DelaGothicOne-Regular.ttf",
     "default": true
+  },
+  {
+    "name": "LINE Seed JP Thin",
+    "file": "LINE_Seed_JP/LINESeedJP-Thin.ttf"
+  },
+  {
+    "name": "LINE Seed JP Regular",
+    "file": "LINE_Seed_JP/LINESeedJP-Regular.ttf"
+  },
+  {
+    "name": "LINE Seed JP Bold",
+    "file": "LINE_Seed_JP/LINESeedJP-Bold.ttf"
+  },
+  {
+    "name": "LINE Seed JP ExtraBold",
+    "file": "LINE_Seed_JP/LINESeedJP-ExtraBold.ttf"
+  },
+  {
+    "name": "M PLUS 1p Thin",
+    "file": "M_PLUS_1p/MPLUS1p-Thin.ttf"
+  },
+  {
+    "name": "M PLUS 1p Light",
+    "file": "M_PLUS_1p/MPLUS1p-Light.ttf"
+  },
+  {
+    "name": "M PLUS 1p Regular",
+    "file": "M_PLUS_1p/MPLUS1p-Regular.ttf"
+  },
+  {
+    "name": "M PLUS 1p Medium",
+    "file": "M_PLUS_1p/MPLUS1p-Medium.ttf"
+  },
+  {
+    "name": "M PLUS 1p Bold",
+    "file": "M_PLUS_1p/MPLUS1p-Bold.ttf"
+  },
+  {
+    "name": "M PLUS 1p ExtraBold",
+    "file": "M_PLUS_1p/MPLUS1p-ExtraBold.ttf"
+  },
+  {
+    "name": "M PLUS 1p Black",
+    "file": "M_PLUS_1p/MPLUS1p-Black.ttf"
   }
 ]
-
