@@ -63,6 +63,8 @@ export async function load_local_fonts_js(on_font_loaded) {
     }
 }
 
+let currentProjectFileHandle = null;
+
 export async function save_file_with_picker_js(default_name, ext_desc, ext, data) {
     const mime = ext === 'png' ? 'image/png' : 'application/json';
     if (typeof window !== 'undefined' && 'showSaveFilePicker' in window) {
@@ -77,6 +79,9 @@ export async function save_file_with_picker_js(default_name, ext_desc, ext, data
             const writable = await handle.createWritable();
             await writable.write(data);
             await writable.close();
+            if (ext === 'json') {
+                currentProjectFileHandle = handle;
+            }
             return handle.name;
         } catch (err) {
             if (err.name === 'AbortError') {
@@ -103,6 +108,22 @@ export async function save_file_with_picker_js(default_name, ext_desc, ext, data
     }
 }
 
+export async function save_or_overwrite_file_js(default_name, ext_desc, ext, data) {
+    if (ext === 'json' && currentProjectFileHandle) {
+        try {
+            const writable = await currentProjectFileHandle.createWritable();
+            await writable.write(data);
+            await writable.close();
+            console.log(`[dr_telop] Overwrote file directly without picker: ${currentProjectFileHandle.name}`);
+            return currentProjectFileHandle.name;
+        } catch (err) {
+            console.warn("Direct overwrite failed, falling back to save picker:", err);
+            currentProjectFileHandle = null;
+        }
+    }
+    return await save_file_with_picker_js(default_name, ext_desc, ext, data);
+}
+
 export async function open_file_with_picker_js(ext_desc, ext, on_file_loaded) {
     const mime = ext === 'png' ? 'image/png' : 'application/json';
     if (typeof window !== 'undefined' && 'showOpenFilePicker' in window) {
@@ -117,6 +138,9 @@ export async function open_file_with_picker_js(ext_desc, ext, on_file_loaded) {
             const file = await handle.getFile();
             const buffer = await file.arrayBuffer();
             const bytes = new Uint8Array(buffer);
+            if (ext === 'json') {
+                currentProjectFileHandle = handle;
+            }
             on_file_loaded(file.name, bytes);
             return;
         } catch (err) {
@@ -139,54 +163,107 @@ export async function open_file_with_picker_js(ext_desc, ext, on_file_loaded) {
     input.click();
 }
 
-export async function load_server_fonts_js(on_font_loaded) {
+export async function load_server_fonts_js(on_font_loaded, on_ui_font_selected, on_default_font_selected) {
     if (typeof window === 'undefined') return;
     try {
-        const resp = await fetch('./fonts/fonts.json');
+        // 1. まず ./fonts/fonts.json を探索、なければルートの ./fonts.json を探索
+        let resp = await fetch('./fonts/fonts.json');
+        let basePath = './fonts/';
         if (!resp.ok) {
-            console.log("[dr_telop] No ./fonts/fonts.json found on server. Skipping server font auto-load.");
+            resp = await fetch('./fonts.json');
+            basePath = './';
+        }
+        if (!resp.ok) {
+            console.log("[dr_telop] No fonts.json found (checked ./fonts/fonts.json and ./fonts.json). Skipping server font auto-load.");
             return;
         }
+
         const manifest = await resp.json();
         if (!Array.isArray(manifest) || manifest.length === 0) return;
 
         console.log(`[dr_telop] Found ${manifest.length} fonts in server manifest.`);
 
-        // 1. default: true のフォントを最優先で取得
-        let defaultItem = manifest.find(item => item.default);
-        if (!defaultItem && manifest.length > 0) {
-            defaultItem = manifest[0];
+        // URL解決ヘルパー: http:// や https:// ならそのまま、ファイル名なら basePath + file
+        function resolveUrl(target) {
+            if (!target) return null;
+            if (target.startsWith('http://') || target.startsWith('https://')) {
+                return target;
+            }
+            return basePath + target;
         }
 
-        if (defaultItem && defaultItem.file) {
+        const loadedUrls = new Set();
+
+        async function fetchAndRegisterFont(item) {
+            const fontUrl = resolveUrl(item.url || item.file);
+            if (!fontUrl || loadedUrls.has(fontUrl)) return null;
             try {
-                const fResp = await fetch('./fonts/' + defaultItem.file);
+                const fResp = await fetch(fontUrl);
                 if (fResp.ok) {
                     const buffer = await fResp.arrayBuffer();
-                    on_font_loaded(defaultItem.name || defaultItem.file, new Uint8Array(buffer));
-                    console.log(`[dr_telop] Loaded default server font: ${defaultItem.name || defaultItem.file}`);
+                    const fontName = item.name || item.family || item.file || "ServerFont";
+                    on_font_loaded(fontName, new Uint8Array(buffer));
+                    loadedUrls.add(fontUrl);
+                    console.log(`[dr_telop] Loaded server font: ${fontName} (${fontUrl})`);
+                    return fontName;
+                } else {
+                    console.warn(`Failed to fetch font from ${fontUrl}: status ${fResp.status}`);
                 }
             } catch (e) {
-                console.warn("Failed to fetch default server font:", e);
+                console.warn(`Failed to fetch server font from ${fontUrl}:`, e);
+            }
+            return null;
+        }
+
+        // 1. 【最優先】ui: true のフォントを取得し、UI用フォントとして通知
+        const uiItem = manifest.find(item => item.ui);
+        if (uiItem) {
+            const name = await fetchAndRegisterFont(uiItem);
+            if (name && on_ui_font_selected) {
+                on_ui_font_selected(name);
+                console.log(`[dr_telop] Selected UI font: ${name}`);
             }
         }
 
-        // 2. 残りのフォントもバックグラウンドで取得
-        for (const item of manifest) {
-            if (item !== defaultItem && item.file) {
-                try {
-                    const fResp = await fetch('./fonts/' + item.file);
-                    if (fResp.ok) {
-                        const buffer = await fResp.arrayBuffer();
-                        on_font_loaded(item.name || item.file, new Uint8Array(buffer));
-                        console.log(`[dr_telop] Loaded server font: ${item.name || item.file}`);
-                    }
-                } catch (e) {
-                    console.warn(`Failed to fetch server font ${item.file}:`, e);
-                }
+        // 2. 【次優先】default: true のフォント（テロップ初期値）を取得
+        let defaultItem = manifest.find(item => item.default);
+        if (!defaultItem && !uiItem && manifest.length > 0) {
+            defaultItem = manifest[0];
+        }
+        if (defaultItem) {
+            const name = await fetchAndRegisterFont(defaultItem);
+            if (name && on_default_font_selected) {
+                on_default_font_selected(name);
+                console.log(`[dr_telop] Selected default telop font: ${name}`);
             }
+        }
+
+        // 3. 残りのフォントもバックグラウンドで取得
+        for (const item of manifest) {
+            await fetchAndRegisterFont(item);
         }
     } catch (e) {
         console.log("[dr_telop] Server fonts not available:", e);
+    }
+}
+
+export function storage_get_js(key) {
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            return window.localStorage.getItem(key);
+        }
+    } catch (e) {
+        console.warn("[dr_telop] localStorage get failed:", e);
+    }
+    return null;
+}
+
+export function storage_set_js(key, value) {
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.setItem(key, value);
+        }
+    } catch (e) {
+        console.warn("[dr_telop] localStorage set failed:", e);
     }
 }
