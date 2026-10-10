@@ -192,16 +192,26 @@ export async function load_server_fonts_js(on_font_loaded, on_ui_font_selected, 
             return basePath + target;
         }
 
+        // アイテムからURL配列を抽出（file/urlの単一文字列、またはfiles/urlsの配列に対応）
+        function getItemUrls(item) {
+            if (Array.isArray(item.files)) {
+                return item.files.map(resolveUrl).filter(Boolean);
+            }
+            if (Array.isArray(item.urls)) {
+                return item.urls.map(resolveUrl).filter(Boolean);
+            }
+            const single = resolveUrl(item.url || item.file);
+            return single ? [single] : [];
+        }
+
         const loadedUrls = new Set();
 
-        async function fetchAndRegisterFont(item) {
-            const fontUrl = resolveUrl(item.url || item.file);
+        async function fetchUrl(fontUrl, fontName) {
             if (!fontUrl || loadedUrls.has(fontUrl)) return null;
             try {
                 const fResp = await fetch(fontUrl);
                 if (fResp.ok) {
                     const buffer = await fResp.arrayBuffer();
-                    const fontName = item.name || item.family || item.file || "ServerFont";
                     on_font_loaded(fontName, new Uint8Array(buffer));
                     loadedUrls.add(fontUrl);
                     console.log(`[dr_telop] Loaded server font: ${fontName} (${fontUrl})`);
@@ -215,10 +225,23 @@ export async function load_server_fonts_js(on_font_loaded, on_ui_font_selected, 
             return null;
         }
 
+        async function fetchAndRegisterItem(item) {
+            const fontName = item.name || item.family || "ServerFont";
+            const urls = getItemUrls(item);
+            let firstSuccess = null;
+            for (const url of urls) {
+                const res = await fetchUrl(url, fontName);
+                if (res && !firstSuccess) {
+                    firstSuccess = res;
+                }
+            }
+            return firstSuccess;
+        }
+
         // 1. 【最優先】ui: true のフォントを取得し、UI用フォントとして通知
         const uiItem = manifest.find(item => item.ui);
         if (uiItem) {
-            const name = await fetchAndRegisterFont(uiItem);
+            const name = await fetchAndRegisterItem(uiItem);
             if (name && on_ui_font_selected) {
                 on_ui_font_selected(name);
                 console.log(`[dr_telop] Selected UI font: ${name}`);
@@ -231,7 +254,7 @@ export async function load_server_fonts_js(on_font_loaded, on_ui_font_selected, 
             defaultItem = manifest[0];
         }
         if (defaultItem) {
-            const name = await fetchAndRegisterFont(defaultItem);
+            const name = await fetchAndRegisterItem(defaultItem);
             if (name && on_default_font_selected) {
                 on_default_font_selected(name);
                 console.log(`[dr_telop] Selected default telop font: ${name}`);
@@ -240,7 +263,7 @@ export async function load_server_fonts_js(on_font_loaded, on_ui_font_selected, 
 
         // 3. 残りのフォントもバックグラウンドで取得
         for (const item of manifest) {
-            await fetchAndRegisterFont(item);
+            await fetchAndRegisterItem(item);
         }
     } catch (e) {
         console.log("[dr_telop] Server fonts not available:", e);
