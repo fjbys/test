@@ -10,77 +10,38 @@
     "default": true
   },
   {
-    "name": "LINE Seed JP Thin",
-    "file": "LINE_Seed_JP/LINESeedJP-Thin.ttf"
+    "name": "LINE Seed JP",
+    "files": [
+      "LINE_Seed_JP/LINESeedJP-Thin.ttf",
+      "LINE_Seed_JP/LINESeedJP-Regular.ttf",
+      "LINE_Seed_JP/LINESeedJP-Bold.ttf",
+      "LINE_Seed_JP/LINESeedJP-ExtraBold.ttf"
+    ]
   },
   {
-    "name": "LINE Seed JP Regular",
-    "file": "LINE_Seed_JP/LINESeedJP-Regular.ttf"
-  },
-  {
-    "name": "LINE Seed JP Bold",
-    "file": "LINE_Seed_JP/LINESeedJP-Bold.ttf"
-  },
-  {
-    "name": "LINE Seed JP ExtraBold",
-    "file": "LINE_Seed_JP/LINESeedJP-ExtraBold.ttf"
-  },
-  {
-    "name": "M PLUS 1p Thin",
-    "file": "M_PLUS_1p/MPLUS1p-Thin.ttf"
-  },
-  {
-    "name": "M PLUS 1p Light",
-    "file": "M_PLUS_1p/MPLUS1p-Light.ttf"
-  },
-  {
-    "name": "M PLUS 1p Regular",
-    "file": "M_PLUS_1p/MPLUS1p-Regular.ttf"
-  },
-  {
-    "name": "M PLUS 1p Medium",
-    "file": "M_PLUS_1p/MPLUS1p-Medium.ttf"
-  },
-  {
-    "name": "M PLUS 1p Bold",
-    "file": "M_PLUS_1p/MPLUS1p-Bold.ttf"
-  },
-  {
-    "name": "M PLUS 1p ExtraBold",
-    "file": "M_PLUS_1p/MPLUS1p-ExtraBold.ttf"
-  },
-  {
-    "name": "M PLUS 1p Black",
-    "file": "M_PLUS_1p/MPLUS1p-Black.ttf"
+    "name": "M PLUS 1p",
+    "files": [
+      "M_PLUS_1p/MPLUS1p-Thin.ttf",
+      "M_PLUS_1p/MPLUS1p-Light.ttf",
+      "M_PLUS_1p/MPLUS1p-Regular.ttf",
+      "M_PLUS_1p/MPLUS1p-Medium.ttf",
+      "M_PLUS_1p/MPLUS1p-Bold.ttf",
+      "M_PLUS_1p/MPLUS1p-ExtraBold.ttf",
+      "M_PLUS_1p/MPLUS1p-Black.ttf"
+    ]
   },
   {
     "name": "GenEiGothicN",
-    "file": "GenEiGothicN/GenEiGothicN-ExtraLigh.otf"
+    "files": [
+      "GenEiGothicN/GenEiGothicN-ExtraLigh.otf",
+      "GenEiGothicN/GenEiGothicN-Ligh.otf",
+      "GenEiGothicN/GenEiGothicN-Semilight.otf",
+      "GenEiGothicN/GenEiGothicN-Regular.otf",
+      "GenEiGothicN/GenEiGothicN-Semibold.otf",
+      "GenEiGothicN/GenEiGothicN-Bold.otf",
+      "GenEiGothicN/GenEiGothicN-Heavy.otf"
+    ]
   },
-  {
-    "name": "GenEiGothicN",
-    "file": "GenEiGothicN/GenEiGothicN-Ligh.otf"
-  },
-  {
-    "name": "GenEiGothicN",
-    "file": "GenEiGothicN/GenEiGothicN-Semilight.otf"
-  },
-  {
-    "name": "GenEiGothicN",
-    "file": "GenEiGothicN/GenEiGothicN-Regular.otf"
-  },
-  {
-    "name": "GenEiGothicN",
-    "file": "GenEiGothicN/GenEiGothicN-Semibold.otf"
-  },
-  {
-    "name": "GenEiGothicN",
-    "file": "GenEiGothicN/GenEiGothicN-Bold.otf"
-  },
-  {
-    "name": "GenEiGothicN",
-    "file": "GenEiGothicN/GenEiGothicN-Heavy.otf"
-  },  
   {
     "name": "GenEiPOPle",
     "file": "GenEiPOPle_v1.0/GenEiPOPlePw-Bk.ttf"
@@ -93,6 +54,4 @@
     "name": "k-font",
     "file": "k-font/keifont.ttf"
   }
-
-
 ]
