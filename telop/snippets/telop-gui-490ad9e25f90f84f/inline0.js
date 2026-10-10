@@ -163,10 +163,12 @@ export async function open_file_with_picker_js(ext_desc, ext, on_file_loaded) {
     input.click();
 }
 
-export async function load_server_fonts_js(on_font_loaded, on_ui_font_selected, on_default_font_selected) {
+let cachedServerManifest = null;
+let cachedManifestBasePath = './fonts/';
+
+export async function load_server_fonts_js(on_font_loaded, on_ui_font_selected, on_default_font_selected, on_manifest_names_loaded) {
     if (typeof window === 'undefined') return;
     try {
-        // 1. まず ./fonts/fonts.json を探索、なければルートの ./fonts.json を探索
         let resp = await fetch('./fonts/fonts.json');
         let basePath = './fonts/';
         if (!resp.ok) {
@@ -181,9 +183,16 @@ export async function load_server_fonts_js(on_font_loaded, on_ui_font_selected, 
         const manifest = await resp.json();
         if (!Array.isArray(manifest) || manifest.length === 0) return;
 
+        cachedServerManifest = manifest;
+        cachedManifestBasePath = basePath;
         console.log(`[dr_telop] Found ${manifest.length} fonts in server manifest.`);
 
-        // URL解決ヘルパー: http:// や https:// ならそのまま、ファイル名なら basePath + file
+        // マニフェスト内の全フォント名一覧を通知
+        const names = manifest.map(item => item.name || item.family).filter(Boolean);
+        if (on_manifest_names_loaded) {
+            on_manifest_names_loaded(names);
+        }
+
         function resolveUrl(target) {
             if (!target) return null;
             if (target.startsWith('http://') || target.startsWith('https://')) {
@@ -192,7 +201,6 @@ export async function load_server_fonts_js(on_font_loaded, on_ui_font_selected, 
             return basePath + target;
         }
 
-        // アイテムからURL配列を抽出（file/urlの単一文字列、またはfiles/urlsの配列に対応）
         function getItemUrls(item) {
             if (Array.isArray(item.files)) {
                 return item.files.map(resolveUrl).filter(Boolean);
@@ -261,12 +269,44 @@ export async function load_server_fonts_js(on_font_loaded, on_ui_font_selected, 
             }
         }
 
-        // 3. 残りのフォントもバックグラウンドで取得
-        for (const item of manifest) {
-            await fetchAndRegisterItem(item);
-        }
+        // 3. 他のフォントはオンデマンド読み込み（起動時はスキップして初期通信を最小化）
+        console.log("[dr_telop] Server fonts on-demand catalog initialized.");
     } catch (e) {
         console.log("[dr_telop] Server fonts not available:", e);
+    }
+}
+
+export async function fetch_server_font_by_name_js(target_name, on_font_loaded) {
+    if (!cachedServerManifest) return;
+    const item = cachedServerManifest.find(i => (i.name || i.family) === target_name);
+    if (!item) return;
+
+    function resolveUrl(target) {
+        if (!target) return null;
+        if (target.startsWith('http://') || target.startsWith('https://')) return target;
+        return cachedManifestBasePath + target;
+    }
+
+    let urls = [];
+    if (Array.isArray(item.files)) urls = item.files.map(resolveUrl).filter(Boolean);
+    else if (Array.isArray(item.urls)) urls = item.urls.map(resolveUrl).filter(Boolean);
+    else if (item.url || item.file) {
+        const u = resolveUrl(item.url || item.file);
+        if (u) urls.push(u);
+    }
+
+    const fontName = item.name || item.family || target_name;
+    for (const url of urls) {
+        try {
+            const resp = await fetch(url);
+            if (resp.ok) {
+                const buffer = await resp.arrayBuffer();
+                on_font_loaded(fontName, new Uint8Array(buffer));
+                console.log(`[dr_telop] On-demand loaded font: ${fontName} from ${url}`);
+            }
+        } catch (e) {
+            console.warn(`[dr_telop] On-demand fetch failed for ${url}:`, e);
+        }
     }
 }
 
@@ -289,4 +329,64 @@ export function storage_set_js(key, value) {
     } catch (e) {
         console.warn("[dr_telop] localStorage set failed:", e);
     }
+}
+
+export async function open_font_files_with_picker_js(on_font_loaded) {
+    if (typeof window !== 'undefined' && 'showOpenFilePicker' in window) {
+        try {
+            const handles = await window.showOpenFilePicker({
+                types: [{
+                    description: 'Font Files (*.ttf, *.otf, *.woff, *.woff2, *.ttc)',
+                    accept: {
+                        'font/*': ['.ttf', '.otf', '.woff', '.woff2', '.ttc'],
+                        'application/font-woff': ['.woff'],
+                        'application/font-woff2': ['.woff2'],
+                        'application/x-font-truetype': ['.ttf'],
+                        'application/x-font-opentype': ['.otf'],
+                        'application/octet-stream': ['.ttf', '.otf', '.woff', '.woff2', '.ttc']
+                    }
+                }],
+                multiple: true
+            });
+            let loadedCount = 0;
+            for (const handle of handles) {
+                try {
+                    const file = await handle.getFile();
+                    const buffer = await file.arrayBuffer();
+                    const bytes = new Uint8Array(buffer);
+                    on_font_loaded(file.name, bytes);
+                    loadedCount++;
+                } catch (e) {
+                    console.warn(`[dr_telop] Failed to read font file ${handle.name}:`, e);
+                }
+            }
+            console.log(`[dr_telop] User imported ${loadedCount} font files via picker.`);
+            return;
+        } catch (err) {
+            if (err.name === 'AbortError') return;
+            console.warn("showOpenFilePicker for fonts failed, falling back to file input:", err);
+        }
+    }
+    // フォールバック: <input type="file" multiple>
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '.ttf,.otf,.woff,.woff2,.ttc';
+    input.onchange = async () => {
+        if (input.files && input.files.length > 0) {
+            let loadedCount = 0;
+            for (const file of Array.from(input.files)) {
+                try {
+                    const buffer = await file.arrayBuffer();
+                    const bytes = new Uint8Array(buffer);
+                    on_font_loaded(file.name, bytes);
+                    loadedCount++;
+                } catch (e) {
+                    console.warn(`[dr_telop] Failed to read font file ${file.name}:`, e);
+                }
+            }
+            console.log(`[dr_telop] User imported ${loadedCount} font files via input fallback.`);
+        }
+    };
+    input.click();
 }
