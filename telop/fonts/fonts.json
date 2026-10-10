@@ -42,10 +42,14 @@
       "GenEiGothicN/GenEiGothicN-Heavy.otf"
     ]
   },  
-    {
+  {
     "name": "Corporate-Logo-Bold-ver3",
     "file": "Corporate-Logo-Bold-ver3/Corporate-Logo-Bold-ver3.otf"
   },
+  {
+    "name": "Corporate-Logo-Rounded-Bold-ver3",
+    "file": "Corporate-Logo-Rounded-Bold-ver3/Corporate-Logo-Rounded-Bold-ver3.otf"
+  },  
   {
     "name": "GenEiPOPle",
     "file": "GenEiPOPle_v1.0/GenEiPOPlePw-Bk.ttf"
