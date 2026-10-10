@@ -6,8 +6,8 @@
     <title>dr_telop - Web Telop Designer</title>
     
 <script type="module">
-import init, * as bindings from './telop-web-7d8941a3d3da33c0.js';
-const wasm = await init({ module_or_path: './telop-web-7d8941a3d3da33c0_bg.wasm' });
+import init, * as bindings from './telop-web-9fbc4e60d197bc2f.js';
+const wasm = await init({ module_or_path: './telop-web-9fbc4e60d197bc2f_bg.wasm' });
 
 
 window.wasmBindings = bindings;
@@ -60,7 +60,7 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             100% { transform: rotate(360deg); }
         }
     </style>
-<link rel="modulepreload" href="./telop-web-7d8941a3d3da33c0.js" crossorigin="anonymous" integrity="sha384-fKW2E5wEFQdRvb0RWDyMkTzJINAha6nmPuiuyYj2rufiQfa0cGFA1xv+rAQOFWH8"><link rel="modulepreload" href="./snippets/telop-gui-490ad9e25f90f84f/inline0.js" crossorigin="anonymous" integrity="sha384-y/XjSz0G5yNAzam29bZUfAGDui2mkChHiG3GEE1vnghlehN3gIPTwZeIbeKtEGF5"><link rel="preload" href="./telop-web-7d8941a3d3da33c0_bg.wasm" crossorigin="anonymous" integrity="sha384-3aG84RhCFPGJfd0nmlZHtr6xGyur+d7Q2Suvkvv+rZGUEX5wcYAarmRbgnsZPw43" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="./telop-web-9fbc4e60d197bc2f.js" crossorigin="anonymous" integrity="sha384-VhkKMoLsds4EGDS3BHdjpb6NvTFeFYT3et4SoiP0vWwW5s16gd4Fdc+AFv16pD6H"><link rel="modulepreload" href="./snippets/telop-gui-490ad9e25f90f84f/inline0.js" crossorigin="anonymous" integrity="sha384-wjwcNXrS+DSm9Aj2W/nZ6gCM+FPoHwyh7t4tX/0d/eMZt0kQl80fsPgBXbJ3pc7U"><link rel="preload" href="./telop-web-9fbc4e60d197bc2f_bg.wasm" crossorigin="anonymous" integrity="sha384-xyrQmoSd8cdsT87WE8ILZfYc1aH8pVFIDUQqcQAlZEPImTPLCoNpiYl2mULbYl8r" as="fetch" type="application/wasm"></head>
 <body>
     <div id="loading">
         <div class="spinner"></div>

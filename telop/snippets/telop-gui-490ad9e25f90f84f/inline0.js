@@ -63,6 +63,63 @@ export async function load_local_fonts_js(on_font_loaded) {
     }
 }
 
+let cachedLocalFonts = null;
+
+export async function scan_local_font_families_js(on_families_scanned) {
+    if (typeof window === 'undefined' || !('queryLocalFonts' in window)) {
+        alert("お使いのブラウザは Local Font Access API に未対応です。Google Chrome または Microsoft Edge をご利用ください。");
+        return;
+    }
+    try {
+        const fonts = await window.queryLocalFonts();
+        cachedLocalFonts = fonts;
+        console.log(`[dr_telop] Scanned ${fonts.length} local font faces.`);
+        const familySet = new Set();
+        for (const f of fonts) {
+            if (f.family) {
+                familySet.add(f.family);
+            }
+        }
+        const families = Array.from(familySet).sort();
+        if (on_families_scanned) {
+            on_families_scanned(families);
+        }
+    } catch (err) {
+        if (err.name === 'NotAllowedError') {
+            console.warn("[dr_telop] User dismissed local font permission.");
+        } else {
+            console.error("[dr_telop] Local font scan failed:", err);
+        }
+    }
+}
+
+export async function fetch_local_font_by_family_js(target_family, on_font_loaded) {
+    if (!cachedLocalFonts) {
+        if (typeof window !== 'undefined' && 'queryLocalFonts' in window) {
+            try {
+                cachedLocalFonts = await window.queryLocalFonts();
+            } catch (e) {
+                console.warn("[dr_telop] Failed to query local fonts:", e);
+                return;
+            }
+        } else {
+            return;
+        }
+    }
+    if (!cachedLocalFonts) return;
+    const targets = cachedLocalFonts.filter(f => f.family === target_family);
+    for (const font of targets) {
+        try {
+            const blob = await font.blob();
+            const buffer = await blob.arrayBuffer();
+            on_font_loaded(font.fullName || font.family, new Uint8Array(buffer));
+            console.log(`[dr_telop] Loaded local font face: ${font.fullName || font.family}`);
+        } catch (e) {
+            console.warn(`[dr_telop] Failed to load local font face ${font.fullName}:`, e);
+        }
+    }
+}
+
 let currentProjectFileHandle = null;
 
 export async function save_file_with_picker_js(default_name, ext_desc, ext, data) {
