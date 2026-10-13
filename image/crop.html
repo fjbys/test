@@ -1,0 +1,169 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>画像編集ツール</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../lib/cropper.min.css">
+  <style>
+    .cropper-bg { background-image: none; background-color: #f3f4f6; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 md:p-8">
+  
+  <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 md:p-8">
+    
+    <div class="text-center mb-8">
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">画像の回転・トリミング</h1>
+      <p class="text-gray-500 text-sm">PNG/JPGをアップロードし、好きな形式で保存できます。</p>
+    </div>
+
+    <div id="uploadArea" class="flex items-center justify-center w-full mb-6">
+      <label for="imageInput" class="flex flex-col items-center justify-center w-full h-48 border-2 border-blue-300 border-dashed rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition">
+        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+          <svg class="w-12 h-12 mb-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">クリックして画像を選択</span></p>
+        </div>
+        <input id="imageInput" type="file" accept="image/png, image/jpeg" class="hidden" />
+      </label>
+    </div>
+
+    <div id="editorArea" class="hidden space-y-6">
+      
+      <div class="bg-gray-50 p-4 rounded-lg flex flex-wrap gap-y-3 gap-x-2 items-center justify-center border border-gray-200">
+        <div class="flex items-center gap-1.5 mr-4">
+          <span class="text-sm font-medium text-gray-600">回転:</span>
+          <button id="rotateLeftBtn" class="p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 text-gray-700 shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          </button>
+          <button id="rotateRightBtn" class="p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 text-gray-700 shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          </button>
+        </div>
+        
+        <div class="hidden md:block w-px h-6 bg-gray-300 mx-2"></div>
+        
+        <div class="flex items-center gap-1.5 flex-wrap justify-center">
+          <span class="text-sm font-medium text-gray-600">比率:</span>
+          <button class="aspect-btn px-3 py-1.5 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100 text-gray-700 shadow-sm transition" data-aspect="NaN">フリー</button>
+          <button class="aspect-btn px-3 py-1.5 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100 text-gray-700 shadow-sm transition" data-aspect="1.7777777777777777">16:9</button>
+          <button class="aspect-btn px-3 py-1.5 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100 text-gray-700 shadow-sm transition" data-aspect="1.3333333333333333">4:3</button>
+          <button class="aspect-btn px-3 py-1.5 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100 text-gray-700 shadow-sm transition" data-aspect="1">1:1</button>
+        </div>
+      </div>
+
+      <div class="border border-gray-200 rounded-lg bg-gray-100 flex justify-center items-center overflow-hidden" style="min-height: 300px; max-height: 70vh;">
+        <img id="imagePreview" src="" alt="プレビュー" class="max-w-full block">
+      </div>
+
+      <div class="bg-blue-50 p-6 rounded-xl border border-blue-100 space-y-4">
+        <div class="flex items-center justify-center gap-6">
+          <span class="text-sm font-bold text-gray-700">保存形式を選択:</span>
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="radio" name="format" value="image/jpeg" class="w-4 h-4 text-blue-600 focus:ring-blue-500" checked>
+            <span class="ml-2 text-sm font-medium text-gray-700">JPG</span>
+          </label>
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="radio" name="format" value="image/png" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+            <span class="ml-2 text-sm font-medium text-gray-700">PNG</span>
+          </label>
+        </div>
+
+        <div class="flex gap-4 justify-center">
+          <button id="cancelBtn" class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-100 transition text-sm">キャンセル</button>
+          <button id="saveBtn" class="px-10 py-3 bg-green-600 text-white font-bold rounded-full hover:bg-green-700 transition shadow-lg flex items-center justify-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            編集して保存
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="status" class="text-center text-blue-600 font-semibold mt-6 hidden">処理中...</div>
+
+  </div>
+
+  <script src="../lib/cropper.min.js"></script>
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const uploadArea = document.getElementById('uploadArea');
+    const editorArea = document.getElementById('editorArea');
+    const imagePreview = document.getElementById('imagePreview');
+    const statusDiv = document.getElementById('status');
+    const rotateLeftBtn = document.getElementById('rotateLeftBtn');
+    const rotateRightBtn = document.getElementById('rotateRightBtn');
+    const aspectBtns = document.querySelectorAll('.aspect-btn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const saveBtn = document.getElementById('saveBtn');
+
+    let cropper = null;
+    let originalFileName = "";
+
+    imageInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      originalFileName = file.name.replace(/\.[^/.]+$/, "");
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        imagePreview.src = event.target.result;
+        uploadArea.classList.add('hidden');
+        editorArea.classList.remove('hidden');
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(imagePreview, {
+          aspectRatio: NaN,
+          viewMode: 1,
+          autoCropArea: 0.8
+        });
+        setActiveAspectBtn(document.querySelector('.aspect-btn[data-aspect="NaN"]'));
+      };
+      reader.readAsDataURL(file);
+    });
+
+    rotateLeftBtn.addEventListener('click', () => cropper && cropper.rotate(-90));
+    rotateRightBtn.addEventListener('click', () => cropper && cropper.rotate(90));
+
+    aspectBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        if (!cropper) return;
+        cropper.setAspectRatio(parseFloat(this.getAttribute('data-aspect')));
+        setActiveAspectBtn(this);
+      });
+    });
+
+    function setActiveAspectBtn(activeBtn) {
+        aspectBtns.forEach(btn => btn.classList.replace('bg-blue-50', 'bg-white'));
+        activeBtn.classList.replace('bg-white', 'bg-blue-50');
+    }
+
+    cancelBtn.addEventListener('click', () => location.reload()); // シンプルにリロードで初期化
+
+    saveBtn.addEventListener('click', function() {
+      if (!cropper) return;
+      
+      // 保存形式の取得
+      const selectedFormat = document.querySelector('input[name="format"]:checked').value;
+      const extension = selectedFormat === 'image/png' ? 'png' : 'jpg';
+      
+      saveBtn.disabled = true;
+      statusDiv.classList.remove('hidden');
+
+      const canvas = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+      
+      canvas.toBlob(function(blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.download = `${originalFileName}_edited.${extension}`;
+        a.href = url;
+        a.click();
+        
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+            saveBtn.disabled = false;
+            statusDiv.classList.add('hidden');
+        }, 100);
+      }, selectedFormat, 0.9);
+    });
+  </script>
+</body>
+</html>
