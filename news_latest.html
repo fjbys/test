@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>県内webニュース</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f5f6f8; color: #222; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; }
+    
+    header { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #ddd; padding: 12px 16px; }
+    .header-inner { max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    h1 { margin: 0; font-size: 20px; font-weight: 700; }
+    
+    main { max-width: 900px; margin: 0 auto; padding: 10px 10px 40px; }
+    #newsList { display: flex; flex-direction: column; gap: 8px; }
+    
+    .news-item { display: block; background: #fff; border-radius: 10px; padding: 12px 14px; text-decoration: none; color: inherit; border: 1px solid #e8e8e8; transition: background 0.15s; }
+    .news-item:hover { background: #f8f8f8; }
+    .news-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; color: #666; }
+    
+    .station { display: inline-block; padding: 3px 8px; border-radius: 5px; color: #fff; font-size: 11px; font-weight: bold; }
+    .bg-KUTV { background-color: #e91e63; }
+    .bg-RKC  { background-color: #2196f3; }
+    .bg-NHK  { background-color: #4caf50; }
+    .bg-KSS  { background-color: #ff9800; }
+    .bg-YOMIURI { background-color: #0060a8; }
+    .bg-MAINICHI { background-color: #004b98; }
+    .bg-ASAHI { background-color: #e50012; }
+    .bg-NIKKEI { background-color: #003e70; }
+    .bg-SANKEI { background-color: #c21626; }
+    .bg-NEWSKOCHI { background-color: #222222; }
+    .bg-GOGUYNET { background-color: #f39800; }
+    .bg-ニュース { background-color: #999999; }
+
+    .news-title { font-size: 16px; line-height: 1.5; font-weight: 600; }
+    .empty { text-align: center; padding: 40px 20px; color: #777; }
+    
+    .reload-btn { background-color: #007aff; color: white; border: none; padding: 7px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .reload-btn:active { background-color: #005bb5; }
+    
+    .bottom-action { text-align: center; margin-top: 24px; padding-bottom: 20px; }
+    .bottom-action .reload-btn { padding: 12px 24px; font-size: 15px; border-radius: 8px; }
+    
+    @media (max-width: 600px) {
+      header { padding: 10px 12px; }
+      h1 { font-size: 18px; }
+      main { padding: 8px 7px 30px; }
+      .news-item { padding: 11px 12px; }
+      .news-title { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <h1>県内webニュース</h1>
+    <button class="reload-btn" onclick="location.reload()">🔄 更新</button>
+  </div>
+</header>
+
+<main>
+  <div id="newsList">
+    
+    
+                  
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3006409?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/13 07:30</span>
+          </div>
+          <div class="news-title">20代女性が就寝中、窓ガラス割られ…知人の24歳男を逮捕　何らかのトラブルか?現場付近で男を発見・事情聴取→「割りました」その場で犯行を自供</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3006407?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/13 07:00</span>
+          </div>
+          <div class="news-title">“3ミリの隙間”から脱衣場を覗く…54歳男を逮捕　センサーライト・ 動体検知防犯カメラが反応し発覚、「女性の裸を見たかった」供述</div>
+        </a>
+
+              
+        <a class="news-item" href="https://kochi.goguynet.jp/2026/10/13/relo-open_cafekonoha/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-GOGUYNET">GOGUYNET</span>
+            <span>10/13 06:59</span>
+          </div>
+          <div class="news-title">【高知市】本町のボタニカルカフェ「konoha」が10月1日にリニューアルオープン！営業時間延長、ピザやアルコールなど新しいメニューも♪</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3006404?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/13 06:30</span>
+          </div>
+          <div class="news-title">ホテル支配人が行方不明→防犯カメラに1万円札を10枚数える様子が…当時勤務のホテルから売上金を横領か、48歳男を逮捕も「知らない」</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3006403?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/13 06:00</span>
+          </div>
+          <div class="news-title">店「客が万引きかも…」→警察「また来たら通報して」→夕方に来店、79歳女を逮捕…バッグからレシート未記載の商品発見も「盗んでいない」</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2980451?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/13 05:00</span>
+          </div>
+          <div class="news-title">１０月１３日（火）【高知県 交通取締情報】午前・午後　各警察署別一覧</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3006313?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/12 19:52</span>
+          </div>
+          <div class="news-title">【内藤哲也】高知で「デ・ハポン」大合唱！1年半ぶりの高知での試合で勝利</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765366" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/12 19:39</span>
+          </div>
+          <div class="news-title">響き渡る気合≪武道祭≫ 少林寺拳法の女子高校生も演武披露「自分を鍛えられる」【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765364" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/12 19:39</span>
+          </div>
+          <div class="news-title">≪棚田がランウェイに≫アフリカ生地の衣装でファッションショー「地域を元気にしたい」移住女性が企画</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765362" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/12 19:38</span>
+          </div>
+          <div class="news-title">スポーツの秋満喫！カーリングならぬ「カローリング」に体力テスト　片足立ちで”衰え感じる”</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765360" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/12 19:36</span>
+          </div>
+          <div class="news-title">ホテル”実質支配人”の男を逮捕　10万円横領容疑「分かりません」と否認　400万円超の使途不明金も</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3006314?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/12 19:21</span>
+          </div>
+          <div class="news-title">ゴルフ「カシオワールドオープン」出場権獲得は下家秀平、伴真太郎、塚原悠斗、弓削淳詩、呉司聡　レギュラーツアー出場権ないプロの選考会</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3006299?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/12 19:06</span>
+          </div>
+          <div class="news-title">水族館で飼育員体験、ウミガメの甲羅洗い、エサやりも…参加した子どもたちには大きな刺激に「生き物を助けたい・好きだから獣医さんになりたい」</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rccfce312071eb4c668a0f3d1d4e403196" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/12 18:55</span>
+          </div>
+          <div class="news-title">高知県展特選ギャラリー グラフィックデザイン部門【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3006286?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/12 18:53</span>
+          </div>
+          <div class="news-title">棚田でファッションショー、田んぼがランウェイに　鮮やかアフリカ布の衣装×秋の稲穂が“映える”</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc70579603c91f4ab9905fe1cebb3af0eb" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/12 18:49</span>
+          </div>
+          <div class="news-title">高知市で都市緑化祭 球根配布に長蛇の列【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc3b45421a09914ae18eb94e761aa0cf1f" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/12 18:48</span>
+          </div>
+          <div class="news-title">《スポーツの秋を満喫》高知市で21種目のスポーツ体験イベント【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc30cf8c438b584ec08b535e8c950e5d97" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/12 18:47</span>
+          </div>
+          <div class="news-title">四万十市でコンサート中の災害想定した避難訓練【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc51f754bdbe994e938f2661b5d28a4866" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/12 18:47</span>
+          </div>
+          <div class="news-title">高知市のホテルで売上金着服 元支配人の男を逮捕【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc41364c9eb538482d916543a2eabd02e7" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/12 18:46</span>
+          </div>
+          <div class="news-title">《カラフル衣裳と稲穂のコラボ》棚田でファッションショー【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc5bad657b21dd495ca759d9e6ca5447db" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/12 17:56</span>
+          </div>
+          <div class="news-title">《林業のプロを育てよう！》林業大学校で体験型オープンキャンパス【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc2a4279ad6f1d48d9b249d816e033d170" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/12 14:07</span>
+          </div>
+          <div class="news-title">《民家の脱衣所をのぞき》 50代の男を県迷惑防止条例違反で逮捕【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcb78e87ecd3b448319a0edd1c74a2abc7" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/12 14:00</span>
+          </div>
+          <div class="news-title">食料品を万引き 会社役員の女を窃盗の疑いで逮捕【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3005678?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/12 13:45</span>
+          </div>
+          <div class="news-title">目指せ！高校生『ごみ拾い日本一』スポGOMI甲子園高知県大会に34チーム参加「私たちが過ごしている街なのでいつでもきれいな状態にしたい」【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcbf2476a63edb43a8ae749b0835a9fc9c" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/12 13:31</span>
+          </div>
+          <div class="news-title">高知市指定の救護病院で大地震直後の救護訓練【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rca0db111160764b8baacb78669670d948" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/12 13:23</span>
+          </div>
+          <div class="news-title">高知県内8月の求人倍率 2か月ぶりに増加【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3005455?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/12 12:03</span>
+          </div>
+          <div class="news-title">トンボ自然公園に“新トンボ池”整備「乾燥で数が減った小さいトンボのシェルターに」サニーマート労働組合が寄贈</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3005433?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/12 11:49</span>
+          </div>
+          <div class="news-title">インフルエンザ急増、患者数は前週103人→直近242人、定点2.78→6.54に…高知市では「注意報」基準超え、感染対策を</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.asahi.com/articles/ASVBC42NRVBCPLPB001M.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-ASAHI">ASAHI</span>
+            <span>10/12 10:30</span>
+          </div>
+          <div class="news-title">四国大会への代表2人が決まる、朝日アマ将棋高知県大会</div>
+        </a>
+
+              
+        <a class="news-item" href="https://kochi.goguynet.jp/2026/10/12/open_otsuki-ryoma/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-GOGUYNET">GOGUYNET</span>
+            <span>10/12 06:59</span>
+          </div>
+          <div class="news-title">【高知市】「たなぼた」跡地に個室居酒屋「龍馬 高知はりまや橋店」が10月20日オープン予定！</div>
+        </a>
+
+              
+        <a class="news-item" href="https://kochi.goguynet.jp/2026/10/12/open_otsuki-ryoma/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-GOGUYNET">GOGUYNET</span>
+            <span>10/12 06:59</span>
+          </div>
+          <div class="news-title">【高知市】「たなぼた」跡地に個室居酒屋「龍馬 高知はりまや橋店」が10月16日オープン予定！</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2980444?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/12 05:00</span>
+          </div>
+          <div class="news-title">１０月１２日（月）【高知県 交通取締情報】午前・午後　各警察署別一覧</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.yomiuri.co.jp/local/kochi/news/20261012-GYTNT00114/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-YOMIURI">YOMIURI</span>
+            <span>10/12 05:00</span>
+          </div>
+          <div class="news-title">四国高校野球県予選　高知商サヨナラ３位</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.yomiuri.co.jp/local/kochi/news/20261012-GYTNT00107/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-YOMIURI">YOMIURI</span>
+            <span>10/12 05:00</span>
+          </div>
+          <div class="news-title">明徳義塾３年連続Ｖ　四国高校野球県予選</div>
+        </a>
+
+              
+        <a class="news-item" href="https://mainichi.jp/articles/20261012/ddl/k39/050/181000c" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-MAINICHI">MAINICHI</span>
+            <span>10/12 05:00</span>
+          </div>
+          <div class="news-title">高知・明徳義塾　徳島・徳島商　愛媛・今治西V　3位3校も四国大会へ　／高知</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3005013?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/11 18:24</span>
+          </div>
+          <div class="news-title">坂本龍馬が脱藩の際に通ったとされる道を駆ける！険しい坂も沿道からエールを受け懸命にゴールを目指すマラソン大会【高知・梼原町】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765356" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/11 18:18</span>
+          </div>
+          <div class="news-title">「眼鏡は毎日水洗い」眼鏡の“スペシャリスト”が無料で手入れ　目の大切さ訴える【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765355" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/11 18:01</span>
+          </div>
+          <div class="news-title">【高校野球】四国大会は明徳・高知・高知商業　高知大会は明徳が3年連続優勝、高知商業は小津下し3位</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sankei.com/article/20261011-XV4RPDKD3JLJZNL6Q6P2FQDP4I/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-SANKEI">SANKEI</span>
+            <span>10/11 17:20</span>
+          </div>
+          <div class="news-title">「仁淀ブルー」に石の波紋描く　水切り大会、155人競う</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc4b75ed8f9bc447b5bd4d1c63e7843737" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/11 15:34</span>
+          </div>
+          <div class="news-title">香南市の職員を含む従業員2人を逮捕 マッサージ店で客の財布から現金5万円を盗んだ疑い【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3004812?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/11 15:17</span>
+          </div>
+          <div class="news-title">マッサージサロン店内で客の現金5万円を盗んだ疑い　高知県香南市の会計年度任用職員の男（27）ら2人逮捕　2人はマッサージサロン店の従業員で警察が余罪含め捜査【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765351" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/11 13:02</span>
+          </div>
+          <div class="news-title">マッサージ師2人逮捕　客の財布から5万円盗んだか　1人は副業中の市職員　店で被害多数も捜査難航　高知</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765351" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/11 13:02</span>
+          </div>
+          <div class="news-title">マッサージ師2人逮捕　客の財布から5万円盗んだか　1人は副業中の市職員　同様被害多数も捜査難航　高知</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc9cd408797b1f4e3d9ce60397eb175242" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/11 12:04</span>
+          </div>
+          <div class="news-title">≪無料なのに豪華で楽しかった≫自分たちで仏料理つくる子ども食堂開催【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://kochi.goguynet.jp/2026/10/11/relo-open_aeon-rt/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-GOGUYNET">GOGUYNET</span>
+            <span>10/11 06:59</span>
+          </div>
+          <div class="news-title">【高知市】イオンモール高知の「RT HAIR CREATION」が10月2日にリニューアルオープン！ヘアだけでなく、ネイルやまつ毛まで♪</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3003620?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/11 06:00</span>
+          </div>
+          <div class="news-title">飲酒運転の車にはねられ重い後遺症、「車いすの防災士」が生かされた意味　事故の相手を「許した」少年は、20年後「誰も取り残さない社会」実現へ挑む【桑名秀輔さん】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://mainichi.jp/articles/20261011/ddl/k39/050/117000c" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-MAINICHI">MAINICHI</span>
+            <span>10/11 05:11</span>
+          </div>
+          <div class="news-title">6チーム四国大会へ　3県で準決勝　／高知</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2980439?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/11 05:00</span>
+          </div>
+          <div class="news-title">１０月１１日（日）【高知県 交通取締情報】午前・午後　各警察署別一覧</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.yomiuri.co.jp/local/kochi/news/20261011-GYTNT00024/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-YOMIURI">YOMIURI</span>
+            <span>10/11 05:00</span>
+          </div>
+          <div class="news-title">特産の酢ミカン「直七」魚料理にいかが…　宿毛で収穫最盛期</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.yomiuri.co.jp/local/kochi/news/20261011-GYTNT00013/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-YOMIURI">YOMIURI</span>
+            <span>10/11 05:00</span>
+          </div>
+          <div class="news-title">四国高校野球県予選 明徳と高知きょう決勝</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcdf1e8168e77f46f4aed45f597bbe6a21" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/10 18:29</span>
+          </div>
+          <div class="news-title">長期安定の企業投資について理解を深める　高知市で経営者対象のセミナー【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3004397?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/10 18:25</span>
+          </div>
+          <div class="news-title">指示される音声が「スピーカーモード」で筒抜けに…特殊詐欺の受け子か　詐欺未遂の疑いで男（62）逮捕「お金を受け取るために高知県に来ました」と供述【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765349" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/10 18:11</span>
+          </div>
+          <div class="news-title">「主体的に行動を！」防災謎解きゲーム</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765347" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/10 18:09</span>
+          </div>
+          <div class="news-title">あの熱気再び！よさこいリターンズ</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/3004383?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/10 18:08</span>
+          </div>
+          <div class="news-title">雄大なイエローストーンの中になぜか「ピアノ」が⁉56歳で生涯を終えた作家のユーモアあふれる世界観【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc6b7cdc79261e488a92cd6d8a42b2c6a0" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/10 16:23</span>
+          </div>
+          <div class="news-title">高知U　リーグ戦泥沼4連敗　ホームの試合で3失点　最下位脱出ならず　明治安田J3第10節【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc4c5dd6bbf2354368a9795c7fb619125e" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/10 12:05</span>
+          </div>
+          <div class="news-title">高知県公式観光ファンサイト　全会員358人分の個人情報が漏えい　委託先会社のシステム不正アクセス受け【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newskochi.net/sado-ikki" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-NEWSKOCHI">NEWSKOCHI</span>
+            <span>10/10 07:00</span>
+          </div>
+          <div class="news-title">トキがコメづくりを変えた　新潟・佐渡の生き方</div>
+        </a>
+
+              
+        <a class="news-item" href="https://kochi.goguynet.jp/2026/10/10/event_harimayaapero202610/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-GOGUYNET">GOGUYNET</span>
+            <span>10/10 06:59</span>
+          </div>
+          <div class="news-title">【高知市】「ハリマヤアペロ」が10月11日にはりまや橋商店街で開催！休日の午後にワインや料理、生演奏を楽しもう♪</div>
+        </a>
+
+              
+        <a class="news-item" href="https://newsdig.tbs.co.jp/articles/kutv/2993938?display=1" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KUTV">KUTV</span>
+            <span>10/10 06:00</span>
+          </div>
+          <div class="news-title">1100年以上続く「津野山古式神楽」受け継がれる“地域の絆”　伝統の音楽に、今の人々の“個性”が融合【よさこい高知文化祭2026】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.yomiuri.co.jp/local/kochi/news/20261009-GYTNT00142/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-YOMIURI">YOMIURI</span>
+            <span>10/10 05:00</span>
+          </div>
+          <div class="news-title">畑一面の秋色　越知町でコスモスまつりが始まる… ２５日まで</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sankei.com/article/20261010-EBPCDHBIENK53JPS5TEJ7N5PFU/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-SANKEI">SANKEI</span>
+            <span>10/10 05:00</span>
+          </div>
+          <div class="news-title">田んぼに残る“白菊の壕”　神風特攻隊・菊水部隊白菊隊が飛び立った掩体壕　高知県南国市</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sankei.com/article/20261010-CNL6HV27OVPM7BLCNO6FJKIUFY/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-SANKEI">SANKEI</span>
+            <span>10/10 00:47</span>
+          </div>
+          <div class="news-title">高知県公式観光ファンサイトで漏えい　メールアドレスや年齢、性別など358人分</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765345" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/9 19:32</span>
+          </div>
+          <div class="news-title">高知市で《肉食麦飲2026》開催へ！土佐黒牛ハンバーグや県内8店舗のクラフトビールを堪能</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765343" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/9 19:32</span>
+          </div>
+          <div class="news-title">絶妙な弾力と“スルン”とほどける魅惑の食感　京都から《極上わらびもち》が登場【たべるトラベル】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765340" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/9 19:30</span>
+          </div>
+          <div class="news-title">“悶絶級”な脂の旨み！高知の新ブランド牛「土佐黒牛」の絶品焼肉店を徹底調査【肉処でべそ 帯屋町店】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765338" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/9 19:30</span>
+          </div>
+          <div class="news-title">香り豊かな《柿の葉寿司》やフワフワ卵の鶏づくし弁当！全国のご当地グルメが高知に集結【たべるトラベル】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765336" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/9 19:25</span>
+          </div>
+          <div class="news-title">越知町で《コスモスまつり》開幕　“SNS映え”する150万本が3連休に見頃　秋の味覚も【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765334" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/9 19:23</span>
+          </div>
+          <div class="news-title">ほどよい甘さがクセになる　“世界一のシェフ”が手掛ける《絶品アップルパイ》が登場【たべるトラベル】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765332" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/9 19:21</span>
+          </div>
+          <div class="news-title">ルワンダ支援の画家が“思いを描く”圧巻のパフォーマンス　アート体験に児童らチャレンジ【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765330" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/9 19:17</span>
+          </div>
+          <div class="news-title">海洋堂高知「いきものスゴ技」展が開幕　ハシビロコウの“丸飲み”など驚異の生態をフィギュアで再現</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765328" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/9 19:15</span>
+          </div>
+          <div class="news-title">県内企業でも生成AI活用が「常識」に　導入率36％と全国並みに急増、8割が効果を実感【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.nikkei.com/article/DGXZQOCC089Q80Y6A001C2000000/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-NIKKEI">NIKKEI</span>
+            <span>10/9 19:10</span>
+          </div>
+          <div class="news-title">日銀、四国の景気判断を3年ぶり引き上げ　10月「持ち直している」</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.nikkei.com/article/DGXZQOCC089GY0Y6A001C2000000/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-NIKKEI">NIKKEI</span>
+            <span>10/9 19:05</span>
+          </div>
+          <div class="news-title">四国の9月街角景気、2カ月連続低下　物価上昇で消費に負担感</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcf18ecefaec124c179f3f652bb01d9488" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/9 19:01</span>
+          </div>
+          <div class="news-title">《お金を受け取るために高知県に来ました》特殊詐欺未遂で60代の男を現行犯逮捕</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.nikkei.com/article/DGXZQOCC094110Z01C26A0000000/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-NIKKEI">NIKKEI</span>
+            <span>10/9 19:00</span>
+          </div>
+          <div class="news-title">技研製作所の純利益70%増　26年8月期、建機販売が堅調</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.nikkei.com/article/DGXZQOCC094110Z01C26A0000000/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-NIKKEI">NIKKEI</span>
+            <span>10/9 19:00</span>
+          </div>
+          <div class="news-title">技研製作所の26年8月期純利益、70%増　建機販売が堅調</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sankei.com/article/20261009-2VSIAFOGVNNTJBVUH4F5WQLUOY/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-SANKEI">SANKEI</span>
+            <span>10/9 18:51</span>
+          </div>
+          <div class="news-title">高知・早明浦ダムの貯水率25％…香川、徳島の取水制限再開　降雨なければ11月中旬にも…</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sankei.com/article/20261009-2VSIAFOGVNNTJBVUH4F5WQLUOY/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-SANKEI">SANKEI</span>
+            <span>10/9 18:51</span>
+          </div>
+          <div class="news-title">高知・早明浦ダムの貯水率25％…徳島、香川の取水制限再開　降雨なければ11月中旬に0…</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rcf7729faa18c24f87b7a83b2ba8d53dab" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/9 17:04</span>
+          </div>
+          <div class="news-title">《時間雨量180ミリの恐怖も体験》防災キャンプで自らの身を守る力を【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc9f64438bd1414384834d97048511ce52" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/9 16:44</span>
+          </div>
+          <div class="news-title">《新フィギュア発売記念》海洋堂スペースファクトリーで生き物の生態学べる企画展【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://news.ntv.co.jp/n/rkc/category/society/rc9f408b1239a84abd81dcd8f129e226ac" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-RKC">RKC</span>
+            <span>10/9 14:38</span>
+          </div>
+          <div class="news-title">《150万本のコスモスが見頃》越知町コスモスまつり始まる【高知】</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.nikkei.com/article/DGXZQOCC023X60S6A001C2000000/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-NIKKEI">NIKKEI</span>
+            <span>10/9 11:00</span>
+          </div>
+          <div class="news-title">二地域居住、鳥取県とANAが協働　徳島県は都市と地方に学びの場</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.asahi.com/articles/ASVB842C5VB8PLPB00BM.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-ASAHI">ASAHI</span>
+            <span>10/9 10:30</span>
+          </div>
+          <div class="news-title">「ヤッサイ、ヤッサイ」威勢よく　高知・四万十市で「神様の結婚式」</div>
+        </a>
+
+              
+        <a class="news-item" href="https://kochi.goguynet.jp/2026/10/09/event_super-sentai2026/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-GOGUYNET">GOGUYNET</span>
+            <span>10/9 06:59</span>
+          </div>
+          <div class="news-title">【高知市】会場限定のノベルティも♪「スーパー戦隊レジェンドヒストリー展 in 高知」が横山隆一記念まんが館で10月10日から開催！</div>
+        </a>
+
+              
+        <a class="news-item" href="https://mainichi.jp/articles/20261009/ddl/k39/050/268000c" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-MAINICHI">MAINICHI</span>
+            <span>10/9 05:03</span>
+          </div>
+          <div class="news-title">四国2次予選　JR四国、本大会へ　2大会ぶり19回目　／高知</div>
+        </a>
+
+              
+        <a class="news-item" href="https://mainichi.jp/articles/20261009/ddl/k39/050/270000c" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-MAINICHI">MAINICHI</span>
+            <span>10/9 05:03</span>
+          </div>
+          <div class="news-title">四国2次予選　JR四国、本大会へ　監督の話　／高知</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.yomiuri.co.jp/local/kochi/news/20261009-GYTNT00082/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-YOMIURI">YOMIURI</span>
+            <span>10/9 05:00</span>
+          </div>
+          <div class="news-title">土佐和紙の版画感性豊かに</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.yomiuri.co.jp/local/kochi/news/20261008-GYTNT00130/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-YOMIURI">YOMIURI</span>
+            <span>10/9 05:00</span>
+          </div>
+          <div class="news-title">龍馬マラソン「ふるさと納税枠」を新設…　受け付け始まる</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.yomiuri.co.jp/local/kochi/news/20261008-GYTNT00115/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-YOMIURI">YOMIURI</span>
+            <span>10/9 05:00</span>
+          </div>
+          <div class="news-title">県がキャリアカフェを開設…　書類作成などを幅広くサポートし、若者の県内転職を後押しします</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.asahi.com/articles/ASVB81QCZVB8PLPB002M.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-ASAHI">ASAHI</span>
+            <span>10/8 19:00</span>
+          </div>
+          <div class="news-title">沈船彩るべっ甲の技（むろと廃校水族館長コラム）</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.asahi.com/articles/ASVB81QCZVB8PLPB002M.html" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-ASAHI">ASAHI</span>
+            <span>10/8 19:00</span>
+          </div>
+          <div class="news-title">沈船彩るべっ甲の技（むろと廃校水族館長コラム）</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.sunsuntv.co.jp/news/2026/10/2765310" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-KSS">KSS</span>
+            <span>10/8 18:48</span>
+          </div>
+          <div class="news-title">「ちゃんと行けや、素人か」カスハラ対策、10月から義務化　高知のタクシー会社はドラレコで車内も録画</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.nikkei.com/article/DGXZQOCC086990Y6A001C2000000/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-NIKKEI">NIKKEI</span>
+            <span>10/8 18:45</span>
+          </div>
+          <div class="news-title">中四国スーパーのフジ、3〜8月は営業益49%減　仕入れ原価上昇で</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.asahi.com/articles/ASVB41H7MVB4PLPB008M.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-ASAHI">ASAHI</span>
+            <span>10/8 18:00</span>
+          </div>
+          <div class="news-title">スケボーの高校生らが市に陳情　できたスケートパークは中四国最大級</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.asahi.com/articles/ASVB73R5PVB7PLPB002M.html?iref=preftop_kochi_n" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-ASAHI">ASAHI</span>
+            <span>10/8 10:30</span>
+          </div>
+          <div class="news-title">「強かった」高知の高校野球　元アナが往時の盛況伝える本を自費出版</div>
+        </a>
+
+              
+        <a class="news-item" href="https://kochi.goguynet.jp/2026/10/08/relo-open_aeon-breeze/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-GOGUYNET">GOGUYNET</span>
+            <span>10/8 06:59</span>
+          </div>
+          <div class="news-title">【高知市】イオンモール高知の子ども服店「BREEZE」が10月9日リニューアルオープン！10月12日まで秋物アイテムの限定価格販売も♪</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.yomiuri.co.jp/local/kochi/news/20261008-GYTNT00073/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-YOMIURI">YOMIURI</span>
+            <span>10/8 05:00</span>
+          </div>
+          <div class="news-title">とさでん交通、新路線に小型車両初導入…　運転手不足に対応します</div>
+        </a>
+
+              
+        <a class="news-item" href="https://mainichi.jp/articles/20261008/ddl/k39/050/234000c" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-MAINICHI">MAINICHI</span>
+            <span>10/8 05:00</span>
+          </div>
+          <div class="news-title">四国　2次予選　JR四国　11－0大勝　1勝1敗で第3戦へ　／高知</div>
+        </a>
+
+              
+        <a class="news-item" href="https://www.nikkei.com/article/DGXZQOCC061LU0W6A001C2000000/" target="_blank" rel="noopener noreferrer">
+          <div class="news-meta">
+            <span class="station bg-NIKKEI">NIKKEI</span>
+            <span>10/8 05:00</span>
+          </div>
+          <div class="news-title">「行きつけの田舎」を進化　高知・日高村、総務省事業で関係人口拡大</div>
+        </a>
+
+              
+
+  </div>
+  <div class="bottom-action">
+    <button class="reload-btn" onclick="location.reload()">🔄 最新の状態に更新する</button>
+  </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,69 @@
+[
+  {
+    "name": "Noto Sans JP",
+    "file": "Noto_Sans_JP/NotoSansJP-VariableFont_wght.ttf",
+    "ui": true,
+    "default": true
+  },
+  {
+    "name": "Dela Gothic One",
+    "file": "Dela_Gothic_One/DelaGothicOne-Regular.ttf"
+  },
+  {
+    "name": "LINE Seed JP",
+    "files": [
+      "LINE_Seed_JP/LINESeedJP-Thin.ttf",
+      "LINE_Seed_JP/LINESeedJP-Regular.ttf",
+      "LINE_Seed_JP/LINESeedJP-Bold.ttf",
+      "LINE_Seed_JP/LINESeedJP-ExtraBold.ttf"
+    ]
+  },
+  {
+    "name": "M PLUS 1p",
+    "files": [
+      "M_PLUS_1p/MPLUS1p-Thin.ttf",
+      "M_PLUS_1p/MPLUS1p-Light.ttf",
+      "M_PLUS_1p/MPLUS1p-Regular.ttf",
+      "M_PLUS_1p/MPLUS1p-Medium.ttf",
+      "M_PLUS_1p/MPLUS1p-Bold.ttf",
+      "M_PLUS_1p/MPLUS1p-ExtraBold.ttf",
+      "M_PLUS_1p/MPLUS1p-Black.ttf"
+    ]
+  },
+  {
+    "name": "GenEiGothicN",
+    "files": [
+      "GenEiGothicN/GenEiGothicN-ExtraLigh.otf",
+      "GenEiGothicN/GenEiGothicN-Ligh.otf",
+      "GenEiGothicN/GenEiGothicN-Semilight.otf",
+      "GenEiGothicN/GenEiGothicN-Regular.otf",
+      "GenEiGothicN/GenEiGothicN-Semibold.otf",
+      "GenEiGothicN/GenEiGothicN-Bold.otf",
+      "GenEiGothicN/GenEiGothicN-Heavy.otf"
+    ]
+  },  
+  {
+    "name": "Corporate-Logo-Bold-ver3",
+    "file": "Corporate-Logo-Bold-ver3/Corporate-Logo-Bold-ver3.otf"
+  },
+  {
+    "name": "Corporate-Logo-Rounded-Bold-ver3",
+    "file": "Corporate-Logo-Rounded-Bold-ver3/Corporate-Logo-Rounded-Bold-ver3.otf"
+  },  
+  {
+    "name": "GenEiPOPle",
+    "file": "GenEiPOPle_v1.0/GenEiPOPlePw-Bk.ttf"
+  },
+  {
+    "name": "DelaSukoGothic",
+    "file": "DelaSukoGothic/DelaSukoGothicOne-R.otf"
+  },
+  {
+    "name": "LanobePOPv2",
+    "file": "LanobePOPv2/LightNovelPOPv2.otf"
+  },  
+  {
+    "name": "k-font",
+    "file": "k-font/keifont.ttf"
+  }
+]
