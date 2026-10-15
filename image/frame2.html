@@ -86,9 +86,25 @@ async function decodeAt(index){
 }
 let lastDecodeIndex=-1,lastKeyIndex=-1;
 function findKey(i){for(let j=i;j>=0;j--)if(samples[j].is_sync)return j;return -1}
-function makeConfig(t){const entry=t.sample_description?.[0];let codec=entry?.avcC?('avc1.'+[entry.avcC.AVCProfileIndication,entry.avcC.profile_compatibility,entry.avcC.AVCLevelIndication].map(x=>Number(x).toString(16).padStart(2,'0')).join('')):entry?.hvcC?'hvc1':entry?.vpcC?'vp09.00.10.08':entry?.av1C?'av01.0.04M.08':null;
- if(!codec && entry?.mime)codec=entry.mime.split(';')[0];
- return {codec,codedWidth:t.video.width,codedHeight:t.video.height,description:entry?.avcC?.data||entry?.hvcC?.data||entry?.av1C?.data};}
+function makeConfig(t){
+ // MP4Box.jsの公開トラック情報では sample_description が存在しない版がある。
+ // まず公開情報の codec (例: avc1.640028) を使い、設定ボックスは内部の stsd から探す。
+ const trak=mp4file?.moov?.traks?.find(x=>x.tkhd?.track_id===t.id);
+ const entries=trak?.mdia?.minf?.stbl?.stsd?.entries||[];
+ const entry=entries[0]||t.sample_description?.[0]||null;
+ let codec=typeof t.codec==='string'&&t.codec.trim()?t.codec.trim():null;
+ if(!codec&&entry?.type)codec=entry.type;
+ // codec が sample-entry 名だけの場合、WebCodecs向けの完全な codec string を補う。
+ if(codec==='avc1'&&entry?.avcC){const a=entry.avcC;const vals=[a.AVCProfileIndication,a.profile_compatibility??a.profileCompatibility,a.AVCLevelIndication];if(vals.every(v=>Number.isFinite(Number(v))))codec='avc1.'+vals.map(v=>Number(v).toString(16).padStart(2,'0')).join('')}
+ if(codec==='hvc1'&&entry?.hvcC?.general_profile_idc!=null){const h=entry.hvcC;codec=`hvc1.${h.general_profile_space||''}${h.general_profile_idc}.${Number(h.general_profile_compatibility||0).toString(16).toUpperCase()}.${h.general_tier_flag?'H':'L'}${h.general_level_idc}`}
+ const box=entry?.avcC||entry?.hvcC||entry?.vpcC||entry?.av1C;
+ let description=box?.data||box?.config||null;
+ if(description instanceof ArrayBuffer)description=new Uint8Array(description);
+ if(description&&!(description instanceof Uint8Array))try{description=new Uint8Array(description)}catch{description=null}
+ const result={codec,codedWidth:t.video?.width||t.track_width||entry?.width,codedHeight:t.video?.height||t.track_height||entry?.height};
+ if(description?.byteLength)result.description=description;
+ return result;
+}
 fileInput.addEventListener('change',async()=>{
  const f=fileInput.files[0];if(!f)return;
  if(!window.MP4Box){say('MP4Box.jsを読み込めません。ネット接続を確認してください。','warn');return}
@@ -101,7 +117,8 @@ fileInput.addEventListener('change',async()=>{
    const t=info.tracks.find(x=>x.id===track.id);
    try{
     config=makeConfig(t);
-    if(!config.codec)throw new Error('コーデックを判別できませんでした');
+    if(!config.codec)throw new Error('コーデックを判別できませんでした（MP4Box.jsの track.codec が空で、sample entry からも取得できません）');
+    if(!config.codedWidth||!config.codedHeight)throw new Error('映像の幅・高さを読み取れませんでした');
     const support=VideoDecoder.isConfigSupported(config);
     support.then(r=>{
       if(!r.supported){say('この動画のコーデック設定はWebCodecs非対応です: '+config.codec,'warn');return}
@@ -115,12 +132,14 @@ fileInput.addEventListener('change',async()=>{
    }catch(e){say('設定エラー: '+e.message,'warn')}
  };
  mp4file.onSamples=(id,user,samps)=>{
-   samples=samps;
-   sampleTimes=samps.map(s=>s.cts/(track.timescale||1));
+   // MP4Box.jsはサンプルを複数回のコールバックに分けて返すことがあるため、追記する。
+   const wasEmpty=samples.length===0;
+   samples.push(...samps);
+   sampleTimes.push(...samps.map(s=>s.cts/(track.timescale||1)));
    $('countTag').textContent='フレーム: '+samples.length;
-   $('slider').disabled=false;$('prev').disabled=false;$('next').disabled=false;$('gotoBtn').disabled=false;
-   say(`読み込み完了：${samples.length} サンプル。最初のフレームをデコードします。`,'good');
-   decodeAt(0);
+   $('slider').max=Math.max(0,samples.length-1);
+   if(wasEmpty){$('slider').disabled=false;$('prev').disabled=false;$('next').disabled=false;$('gotoBtn').disabled=false;decodeAt(0)}
+   say(`映像サンプルを取得中… ${samples.length} サンプル`);
  };
  const reader=new FileReader();reader.onload=e=>{const buf=e.target.result;buf.fileStart=offset;mp4file.appendBuffer(buf);offset+=buf.byteLength;mp4file.flush()};reader.readAsArrayBuffer(f);
 });
