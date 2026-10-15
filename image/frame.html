@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>動画フレーム抽出</title>
+<style>
+:root{color-scheme:dark;--bg:#10131a;--panel:#191e28;--panel2:#202735;--line:#343d4d;--text:#f2f5fa;--muted:#aab4c5;--accent:#8de0c0;--accent2:#b7a5ff;--danger:#ff9eaa}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#222c3d 0,transparent 42%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:11px;padding:10px 14px;transition:.15s}button:hover:not(:disabled){border-color:var(--accent);transform:translateY(-1px)}button:disabled{opacity:.4;cursor:not-allowed}.primary{background:var(--accent);color:#102019;border-color:var(--accent);font-weight:750}.quiet{background:transparent}.danger{color:var(--danger)}.wrap{max-width:1250px;margin:auto;padding:28px 20px 50px}.top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px}.brand{display:flex;align-items:center;gap:12px}.logo{width:43px;height:43px;display:grid;place-items:center;background:var(--accent);color:#12251e;border-radius:14px;font-size:22px;font-weight:900}.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:800}.top h1{font-size:clamp(22px,3vw,31px);margin:0;letter-spacing:-.04em}.privacy{border:1px solid #35594f;color:var(--accent);background:#162b26;padding:8px 12px;border-radius:99px;font-size:12px;white-space:nowrap}.intro{color:var(--muted);margin:6px 0 22px}.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(290px,.8fr);gap:18px;align-items:start}.panel{background:linear-gradient(145deg,#1b212c,#171c25);border:1px solid var(--line);border-radius:18px;overflow:hidden}.panel-head{padding:17px 19px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.panel-head h2{font-size:15px;margin:0}.panel-body{padding:18px}.drop{border:1px dashed #536174;background:#151a23;border-radius:14px;padding:24px;text-align:center;transition:.2s}.drop.drag{border-color:var(--accent);background:#1b2b28}.drop .glyph{font-size:30px;margin-bottom:5px}.drop strong{display:block}.drop p{font-size:13px;color:var(--muted);margin:5px 0 13px}.file-name{margin-top:10px;font-size:12px;color:var(--accent);overflow-wrap:anywhere}.stage{position:relative;background:#090b10;border-radius:13px;overflow:hidden;min-height:220px;display:grid;place-items:center;margin-top:16px;aspect-ratio:16/9}.stage video{display:block;width:100%;height:100%;max-height:65vh;object-fit:contain}.placeholder{text-align:center;color:#758197;padding:25px}.placeholder .big{font-size:38px}.timeline{margin-top:15px}.time-row{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;margin-bottom:8px}input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}.controls button{flex:1;min-width:88px}.settings{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:15px;padding:13px;background:#141923;border:1px solid var(--line);border-radius:12px}.settings label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}.settings select{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px}.hint{font-size:12px;color:var(--muted);margin:12px 0 0}.side .panel-body{padding:16px}.stats{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}.count{font-size:28px;font-weight:800;letter-spacing:-.05em}.count small{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:0}.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.empty{grid-column:1/-1;border:1px dashed var(--line);border-radius:12px;padding:26px 14px;text-align:center;color:var(--muted);font-size:13px}.shot{min-width:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#121720}.shot img{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#080a0e}.shot-meta{padding:8px 9px}.shot-title{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.shot-sub{font-size:11px;color:var(--muted);margin-top:2px}.shot-actions{display:flex;gap:5px;margin-top:8px}.shot-actions button{padding:5px 7px;font-size:11px;flex:1}.bulk{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.bulk button{font-size:13px}.bulk .primary{grid-column:1/-1}.foot{color:#8590a3;font-size:12px;text-align:center;margin-top:22px}.toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#e5fff4;color:#10251d;padding:11px 17px;border-radius:12px;box-shadow:0 10px 35px #0007;transition:.2s;z-index:5;max-width:calc(100% - 30px);font-size:13px}.toast.show{opacity:1;transform:translate(-50%,0)}.kbd{border:1px solid #485365;border-radius:5px;padding:1px 5px;font-size:11px;color:#cbd4e2}@media(max-width:850px){.layout{grid-template-columns:1fr}.side .gallery{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:560px){.wrap{padding:17px 12px 35px}.top{align-items:flex-start}.privacy{font-size:10px;padding:6px 8px}.side .gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.panel-body{padding:13px}.drop{padding:19px 12px}.settings{gap:10px}.controls button{min-width:72px;padding:9px 7px;font-size:13px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><div class="logo">▣</div><div><div class="eyebrow">LOCAL VIDEO TOOL</div><h1>Frame Pocket</h1></div></div>
+    <div class="privacy">● 端末内で処理・アップロードなし</div>
+  </header>
+  <p class="intro">動画の「この瞬間」を静止画に。フレームを集めて、まとめて持ち帰ろう。</p>
+  <main class="layout">
+    <section class="panel">
+      <div class="panel-head"><h2>01 / 動画とフレーム</h2><span class="eyebrow">CAPTURE</span></div>
+      <div class="panel-body">
+        <div class="drop" id="drop">
+          <div class="glyph">↥</div><strong>動画ファイルをここにドロップ</strong>
+          <p>またはファイルを選択。動画はこのブラウザ内で処理されます。</p>
+          <button class="primary" id="choose">動画を選ぶ</button>
+          <input id="file" type="file" accept="video/*,.mp4,.webm,.mov,.m4v,.ogv" hidden>
+          <div id="fileName" class="file-name"></div>
+        </div>
+        <div class="stage" id="stage">
+          <div class="placeholder" id="placeholder"><div class="big">▶</div><div>動画を読み込むと、ここに表示されます</div></div>
+          <video id="video" playsinline controls hidden></video>
+        </div>
+        <div class="timeline">
+          <div class="time-row"><span>再生位置</span><span><b id="current">00:00.000</b> / <span id="duration">00:00.000</span></span></div>
+          <input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="動画の再生位置" disabled>
+        </div>
+        <div class="controls">
+          <button id="back" disabled title="←">← 1コマ戻る</button>
+          <button id="play" disabled>▶ 再生</button>
+          <button id="forward" disabled title="→">1コマ進む →</button>
+          <button id="capture" class="primary" disabled>＋ このフレームを保存</button>
+        </div>
+        <div class="settings">
+          <label>保存形式 <select id="format"><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option></select></label>
+          <label id="qualityWrap" hidden>JPEG品質 <select id="quality"><option value="0.95">高（95%）</option><option value="0.85">標準（85%）</option><option value="0.7">軽量（70%）</option></select></label>
+          <label>コマ送り <select id="step"><option value="1">1フレーム</option><option value="5">5フレーム</option><option value="10">10フレーム</option></select></label>
+        </div>
+        <p class="hint">ヒント：動画を一時停止してからコマ送りすると、狙った瞬間を探しやすいです。キーボードの <span class="kbd">←</span> <span class="kbd">→</span> でも移動できます。</p>
+      </div>
+    </section>
+    <aside class="panel side">
+      <div class="panel-head"><h2>02 / 保存した静止画</h2><span class="eyebrow">GALLERY</span></div>
+      <div class="panel-body">
+        <div class="stats"><div><div class="count" id="count">0 <small>枚</small></div><div class="hint" style="margin:0">このページを開いている間、一時保存</div></div><button id="clear" class="quiet danger" disabled>全削除</button></div>
+        <div id="gallery" class="gallery"><div class="empty">まだ静止画はありません。<br>動画からフレームを保存してみよう。</div></div>
+        <div class="bulk">
+          <button id="zip" class="primary" disabled>↓ ZIPで一括保存</button>
+          <button id="allDownload" disabled>画像を個別保存</button>
+        </div>
+        <p class="hint">個別保存は画像ごとにダウンロードします。ZIP一括保存はネット接続なしで動作します。</p>
+      </div>
+    </aside>
+  </main>
+  <div class="foot">Frame Pocket · 単一HTML · 外部ライブラリ不使用 · 動画・画像データは端末内のみ</div>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const video=$('video'), fileInput=$('file'), seek=$('seek'), playBtn=$('play'), captureBtn=$('capture');
+let objectUrl=null, frames=[], toastTimer=null, busy=false, lastCaptureTime=-1;
+const canVideo=()=>!!video.src && Number.isFinite(video.duration) && video.duration>0;
+function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600)}
+function timeText(t){if(!Number.isFinite(t)||t<0)t=0;const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=Math.floor(t%60),ms=Math.floor((t%1)*1000);return (h?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'.'+String(ms).padStart(3,'0')}
+function updateControls(){const ok=canVideo();['back','forward','play','capture'].forEach(id=>$(id).disabled=!ok);seek.disabled=!ok;playBtn.textContent=video.paused?'▶ 再生':'Ⅱ 一時停止';$('current').textContent=timeText(video.currentTime);$('duration').textContent=timeText(video.duration);if(ok&&video.duration)seek.value=String(Math.round(video.currentTime/video.duration*1000))}
+function loadFile(file){if(!file)return;if(!file.type.startsWith('video/')&&!/\.(mp4|webm|mov|m4v|ogv|ogg)$/i.test(file.name)){toast('動画ファイルを選択してください');return}if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=URL.createObjectURL(file);video.pause();video.src=objectUrl;video.hidden=false;$('placeholder').hidden=true;$('fileName').textContent=file.name;video.load();updateControls()}
+$('choose').addEventListener('click',()=>fileInput.click());
+fileInput.addEventListener('change',()=>{if(fileInput.files&&fileInput.files[0])loadFile(fileInput.files[0]);fileInput.value=''});
+const drop=$('drop');
+drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag')});
+drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));
+drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag');loadFile(e.dataTransfer.files[0])});
+video.addEventListener('loadedmetadata',()=>{updateControls();toast('動画を読み込みました')});
+video.addEventListener('timeupdate',updateControls);
+video.addEventListener('durationchange',updateControls);
+video.addEventListener('play',updateControls);video.addEventListener('pause',updateControls);video.addEventListener('ended',updateControls);
+playBtn.addEventListener('click',()=>{if(!canVideo())return;if(video.paused)video.play().catch(()=>toast('この動画を再生できませんでした'));else video.pause()});
+seek.addEventListener('input',()=>{if(canVideo()){video.currentTime=video.duration*(Number(seek.value)/1000);updateControls()}});
+function nominalFrameRate(){// HTMLVideoElement does not expose frame rate; 30fps is a practical fallback.
+ return 1/30;
+}
+async function nudge(direction){
+ if(!canVideo())return;
+ video.pause();
+ const amount=Number($('step').value)*nominalFrameRate();
+ const target=Math.max(0,Math.min(video.duration,video.currentTime+direction*amount));
+ try{await seekTo(target);updateControls()}catch(e){toast('フレーム位置を変更できませんでした')}
+}
+function seekTo(t){return new Promise((resolve,reject)=>{if(Math.abs(video.currentTime-t)<0.0005){resolve();return}let done=false;const clean=()=>{video.removeEventListener('seeked',ok);video.removeEventListener('error',bad)};const ok=()=>{if(done)return;done=true;clean();resolve()};const bad=()=>{if(done)return;done=true;clean();reject(new Error('seek failed'))};video.addEventListener('seeked',ok,{once:true});video.addEventListener('error',bad,{once:true});video.currentTime=t;setTimeout(()=>{if(!done){done=true;clean();resolve()}},1200)})}
+$('back').addEventListener('click',()=>nudge(-1));$('forward').addEventListener('click',()=>nudge(1));
+document.addEventListener('keydown',e=>{if(e.altKey||e.ctrlKey||e.metaKey||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;if(e.key==='ArrowLeft'){e.preventDefault();nudge(-1)}if(e.key==='ArrowRight'){e.preventDefault();nudge(1)}if(e.key===' '&&canVideo()){e.preventDefault();playBtn.click()}});
+$('format').addEventListener('change',()=>{$('qualityWrap').hidden=$('format').value!=='image/jpeg'});
+function canvasBlob(canvas,type,quality){return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('画像を書き出せませんでした')),type,quality))}
+async function capture(){
+ if(!canVideo()||busy)return;
+ if(video.readyState<2){toast('動画の読み込みが完了していません');return}
+ busy=true;captureBtn.disabled=true;
+ try{
+ const canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+ const ctx=canvas.getContext('2d',{alpha:false});ctx.drawImage(video,0,0,canvas.width,canvas.height);
+ const type=$('format').value,quality=Number($('quality').value),blob=await canvasBlob(canvas,type,quality);
+ const ext=type==='image/jpeg'?'jpg':'png',num=frames.length+1;
+ frames.push({id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),blob,url:URL.createObjectURL(blob),time:video.currentTime,width:canvas.width,height:canvas.height,name:'frame_'+String(num).padStart(3,'0')+'_'+video.currentTime.toFixed(3).replace('.','s')+'.'+ext});
+ renderGallery();toast('フレームを保存しました（'+canvas.width+' × '+canvas.height+'）');lastCaptureTime=video.currentTime;
+ }catch(e){toast('静止画の保存に失敗しました。別の位置で試してください')}
+ finally{busy=false;updateControls()}
+}
+captureBtn.addEventListener('click',capture);
+function renderGallery(){
+ $('count').innerHTML=frames.length+' <small>枚</small>';$('clear').disabled=!frames.length;$('zip').disabled=!frames.length;$('allDownload').disabled=!frames.length;
+ const gallery=$('gallery');gallery.replaceChildren();
+ if(!frames.length){const empty=document.createElement('div');empty.className='empty';empty.innerHTML='まだ静止画はありません。<br>動画からフレームを保存してみよう。';gallery.append(empty);return}
+ frames.forEach((f,i)=>{const card=document.createElement('article');card.className='shot';const img=document.createElement('img');img.src=f.url;img.alt='保存したフレーム '+(i+1);const meta=document.createElement('div');meta.className='shot-meta';const title=document.createElement('div');title.className='shot-title';title.textContent=f.name;title.title=f.name;const sub=document.createElement('div');sub.className='shot-sub';sub.textContent=timeText(f.time)+' · '+f.width+'×'+f.height;const actions=document.createElement('div');actions.className='shot-actions';const dl=document.createElement('button');dl.textContent='↓ 保存';dl.addEventListener('click',()=>downloadFrame(f));const del=document.createElement('button');del.textContent='削除';del.className='danger';del.addEventListener('click',()=>removeFrame(f.id));actions.append(dl,del);meta.append(title,sub,actions);card.append(img,meta);gallery.append(card)})
+}
+function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+function downloadFrame(f){downloadBlob(f.blob,f.name)}
+function removeFrame(id){const i=frames.findIndex(f=>f.id===id);if(i<0)return;URL.revokeObjectURL(frames[i].url);frames.splice(i,1);renderGallery();toast('静止画を削除しました')}
+$('clear').addEventListener('click',()=>{if(!frames.length)return;if(!confirm('保存した静止画をすべて削除しますか？'))return;frames.forEach(f=>URL.revokeObjectURL(f.url));frames=[];renderGallery();toast('すべて削除しました')});
+$('allDownload').addEventListener('click',async()=>{for(let i=0;i<frames.length;i++){downloadFrame(frames[i]);await new Promise(r=>setTimeout(r,180))}toast('個別ダウンロードを開始しました')});
+// Small self-contained ZIP writer (STORE method, no compression, CRC-32).
+const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(data){let c=0xffffffff;for(let i=0;i<data.length;i++)c=crcTable[(c^data[i])&255]^(c>>>8);return (c^0xffffffff)>>>0}
+function u16(n){return [n&255,(n>>>8)&255]}function u32(n){return [n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]}
+function concat(parts){let total=parts.reduce((n,p)=>n+p.length,0),out=new Uint8Array(total),offset=0;for(const p of parts){out.set(p,offset);offset+=p.length}return out}
+function dosDateTime(date=new Date()){let y=Math.max(1980,date.getFullYear());return {date:((y-1980)<<9)|((date.getMonth()+1)<<5)|date.getDate(),time:(date.getHours()<<11)|(date.getMinutes()<<5)|Math.floor(date.getSeconds()/2)}}
+async function makeZip(items){
+ const enc=new TextEncoder(),local=[],central=[];let offset=0;const dt=dosDateTime();
+ for(const item of items){const name=enc.encode(item.name),data=new Uint8Array(await item.blob.arrayBuffer()),crc=crc32(data);
+ const lh=new Uint8Array([...u32(0x04034b50),...u16(20),...u16(0x0800),...u16(0),...u16(dt.time),...u16(dt.date),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0)]);
+ local.push(lh,name,data);
+ const ch=new Uint8Array([...u32(0x02014b50),...u16(20),...u16(20),...u16(0x0800),...u16(0),...u16(dt.time),...u16(dt.date),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset)]);
+ central.push(ch,name);offset+=lh.length+name.length+data.length;
+ }
+ const centralBytes=concat(central),localBytes=concat(local),end=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),...u16(items.length),...u16(items.length),...u32(centralBytes.length),...u32(localBytes.length),...u16(0)]);
+ return new Blob([localBytes,centralBytes,end],{type:'application/zip'});
+}
+$('zip').addEventListener('click',async()=>{if(!frames.length||busy)return;const btn=$('zip');busy=true;btn.disabled=true;btn.textContent='ZIP作成中…';try{const zip=await makeZip(frames);downloadBlob(zip,'frame-pocket_'+new Date().toISOString().slice(0,10)+'.zip');toast(frames.length+'枚をZIPにまとめました')}catch(e){toast('ZIPの作成に失敗しました')}finally{busy=false;btn.textContent='↓ ZIPで一括保存';btn.disabled=!frames.length}});
+window.addEventListener('beforeunload',()=>{if(objectUrl)URL.revokeObjectURL(objectUrl);frames.forEach(f=>URL.revokeObjectURL(f.url))});
+updateControls();renderGallery();
+})();
+</script>
+</body>
+</html>
