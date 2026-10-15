@@ -95,23 +95,39 @@ async function decodeAt(index){
  }catch(e){if(targetFrame)targetFrame.close();say('このフレームをデコードできませんでした: '+e.message,'warn')}
 }
 function findKey(i){for(let j=i;j>=0;j--)if(samples[j].is_sync)return j;return -1}
+function boxPayload(box){
+ // MP4Box.jsのBoxを再シリアライズし、先頭8バイト（size + type）を除いた
+ // WebCodecs向けのdecoder configuration recordを取り出す。
+ if(!box || typeof box.write!=='function' || typeof DataStream==='undefined') return null;
+ try{
+   const stream=new DataStream(undefined,0,DataStream.BIG_ENDIAN);
+   box.write(stream);
+   const end=stream.position||stream.buffer.byteLength;
+   if(end<=8)return null;
+   return new Uint8Array(stream.buffer.slice(8,end));
+ }catch(e){return null}
+}
 function makeConfig(t){
- // MP4Box.jsの公開トラック情報では sample_description が存在しない版がある。
- // まず公開情報の codec (例: avc1.640028) を使い、設定ボックスは内部の stsd から探す。
  const trak=mp4file?.moov?.traks?.find(x=>x.tkhd?.track_id===t.id);
  const entries=trak?.mdia?.minf?.stbl?.stsd?.entries||[];
  const entry=entries[0]||t.sample_description?.[0]||null;
  let codec=typeof t.codec==='string'&&t.codec.trim()?t.codec.trim():null;
  if(!codec&&entry?.type)codec=entry.type;
- // codec が sample-entry 名だけの場合、WebCodecs向けの完全な codec string を補う。
- if(codec==='avc1'&&entry?.avcC){const a=entry.avcC;const vals=[a.AVCProfileIndication,a.profile_compatibility??a.profileCompatibility,a.AVCLevelIndication];if(vals.every(v=>Number.isFinite(Number(v))))codec='avc1.'+vals.map(v=>Number(v).toString(16).padStart(2,'0')).join('')}
- if(codec==='hvc1'&&entry?.hvcC?.general_profile_idc!=null){const h=entry.hvcC;codec=`hvc1.${h.general_profile_space||''}${h.general_profile_idc}.${Number(h.general_profile_compatibility||0).toString(16).toUpperCase()}.${h.general_tier_flag?'H':'L'}${h.general_level_idc}`}
- const box=entry?.avcC||entry?.hvcC||entry?.vpcC||entry?.av1C;
- let description=box?.data||box?.config||null;
- if(description instanceof ArrayBuffer)description=new Uint8Array(description);
- if(description&&!(description instanceof Uint8Array))try{description=new Uint8Array(description)}catch{description=null}
+ const avc=entry?.avcC||entry?.avcCBox||null;
+ const hvc=entry?.hvcC||entry?.hvcCBox||null;
+ if(codec==='avc1'&&avc){
+   const profile=avc.AVCProfileIndication, compat=avc.profile_compatibility??avc.profileCompatibility, level=avc.AVCLevelIndication;
+   if([profile,compat,level].every(v=>Number.isFinite(Number(v))))codec='avc1.'+[profile,compat,level].map(v=>Number(v).toString(16).padStart(2,'0')).join('');
+ }
+ let description=null;
+ if(codec?.startsWith('avc1')||codec?.startsWith('avc3')) description=boxPayload(avc);
+ else if(codec?.startsWith('hvc1')||codec?.startsWith('hev1')) description=boxPayload(hvc);
+ else description=boxPayload(entry?.vpcC||entry?.av1C||null);
  const result={codec,codedWidth:t.video?.width||t.track_width||entry?.width,codedHeight:t.video?.height||t.track_height||entry?.height};
  if(description?.byteLength)result.description=description;
+ if((codec?.startsWith('avc1')||codec?.startsWith('avc3'))&&!result.description){
+   throw new Error('H.264のavcC設定情報をMP4から取り出せませんでした。MP4Box.jsの形式差異または特殊なMP4の可能性があります');
+ }
  return result;
 }
 fileInput.addEventListener('change',async()=>{
@@ -132,9 +148,9 @@ fileInput.addEventListener('change',async()=>{
     support.then(r=>{
       if(!r.supported){say('この動画のコーデック設定はWebCodecs非対応です: '+config.codec,'warn');return}
       config=r.config;
-      $('codecTag').textContent='codec: '+config.codec;
-      $('fpsTag').textContent='FPS: '+(track.nb_samples/(track.duration/track.timescale)).toFixed(3);
-      mp4file.setExtractionOptions(track.id,null,{nbSamples:Infinity});
+      $('codecTag').textContent='codec: '+config.codec+(config.description?' + config':'');
+      $('fpsTag').textContent='FPS: '+(track.duration&&track.timescale?track.nb_samples/(track.duration/track.timescale):0).toFixed(3);
+      mp4file.setExtractionOptions(track.id,null,{nbSamples:1000});
       mp4file.start();
       say('映像サンプルを抽出中…');
     }).catch(e=>say('コーデック確認に失敗: '+e.message,'warn'));
@@ -148,7 +164,7 @@ fileInput.addEventListener('change',async()=>{
    $('slider').max=Math.max(0,samples.length-1);
    say(`映像サンプルを取得中… ${samples.length} サンプル`);
  };
- const reader=new FileReader();reader.onload=e=>{const buf=e.target.result;buf.fileStart=offset;mp4file.appendBuffer(buf);offset+=buf.byteLength;mp4file.flush();if(samples.length){$('slider').disabled=false;$('prev').disabled=false;$('next').disabled=false;$('gotoBtn').disabled=false;$('countTag').textContent='フレーム: '+samples.length;decodeAt(0)}else say('映像サンプルを取得できませんでした。MP4形式を確認してください。','warn')};reader.readAsArrayBuffer(f);
+ const reader=new FileReader();reader.onload=e=>{const buf=e.target.result;buf.fileStart=offset;mp4file.appendBuffer(buf);offset+=buf.byteLength;mp4file.flush();setTimeout(()=>{if(samples.length){$('slider').disabled=false;$('prev').disabled=false;$('next').disabled=false;$('gotoBtn').disabled=false;$('countTag').textContent='フレーム: '+samples.length;decodeAt(0)}else say('映像サンプルを取得できませんでした。MP4Box.jsの抽出処理が完了しなかった可能性があります。','warn')},0)};reader.readAsArrayBuffer(f);
 });
 $('prev').onclick=()=>decodeAt(Math.max(0,current-1));$('next').onclick=()=>decodeAt(Math.min(samples.length-1,current+1));
 $('slider').addEventListener('change',()=>decodeAt(Number($('slider').value)));
