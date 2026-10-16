@@ -9,40 +9,59 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
+    <!-- Prettier 3 & プラグイン (ブラウザ用 Standalone スクリプト) -->
+    <script src="https://cdn.jsdelivr.net/npm/prettier@3/standalone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prettier@3/plugins/html.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@prettier/plugin-php/standalone.js"></script>
+
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f4f7f6;
             color: #333;
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
             padding: 20px;
         }
         h1 {
             text-align: center;
             color: #2c3e50;
+            margin-bottom: 20px;
         }
         .controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .controls-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         select, button {
-            padding: 10px 15px;
-            font-size: 16px;
+            padding: 10px 16px;
+            font-size: 15px;
             border: 1px solid #ccc;
-            border-radius: 5px;
+            border-radius: 6px;
+            background-color: #fff;
+            cursor: pointer;
         }
         .btn-format {
             background-color: #3498db;
             color: white;
             border: none;
-            cursor: pointer;
             font-weight: bold;
+            transition: background-color 0.15s;
         }
         .btn-format:hover {
             background-color: #2980b9;
+        }
+        .btn-format:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
         }
         .editor-container {
             display: flex;
@@ -53,38 +72,57 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            min-width: 0;
+        }
+        .editor-box label {
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #555;
         }
         textarea {
             width: 100%;
-            height: 400px;
+            height: 480px;
             padding: 15px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.5;
             border: 1px solid #ccc;
-            border-radius: 5px;
+            border-radius: 6px;
             resize: vertical;
             box-sizing: border-box;
+            background-color: #fff;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
         }
         .output-wrapper {
             position: relative;
-            height: 400px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            height: 480px;
+            border: 1px solid #30363d;
+            border-radius: 6px;
             background-color: #0d1117;
             overflow: auto;
         }
         pre {
             margin: 0;
             padding: 15px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.5;
             background: transparent !important;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        code {
+            font-family: inherit;
         }
         .btn-copy {
             position: absolute;
             top: 10px;
             right: 10px;
-            padding: 6px 12px;
+            padding: 6px 14px;
             font-size: 12px;
             background-color: #238636;
             color: white;
@@ -92,6 +130,7 @@
             border-radius: 4px;
             cursor: pointer;
             z-index: 10;
+            transition: background-color 0.15s;
         }
         .btn-copy:hover {
             background-color: #2ea043;
@@ -99,8 +138,23 @@
         .error-message {
             color: #e74c3c;
             margin-top: 10px;
-            font-size: 14px;
+            font-size: 13px;
             white-space: pre-wrap;
+            background: #fdf2f2;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #f8b4b4;
+            display: none;
+        }
+
+        /* レスポンシブ対応 (タブレット・スマホ) */
+        @media (max-width: 768px) {
+            .editor-container {
+                flex-direction: column;
+            }
+            textarea, .output-wrapper {
+                height: 300px;
+            }
         }
     </style>
 </head>
@@ -109,17 +163,20 @@
     <h1>PHP & HTML Formatter</h1>
 
     <div class="controls">
-        <select id="language-select">
-            <option value="html">HTML</option>
-            <option value="php">PHP</option>
-        </select>
-        <button class="btn-format" onclick="formatCode()">コードを整形する</button>
+        <div class="controls-left">
+            <label for="language-select" style="font-weight:bold; font-size:14px;">言語:</label>
+            <select id="language-select">
+                <option value="html">HTML</option>
+                <option value="php">PHP</option>
+            </select>
+        </div>
+        <button class="btn-format" id="format-btn" onclick="formatCode()">コードを整形する</button>
     </div>
 
     <div class="editor-container">
         <div class="editor-box">
             <label for="input-code"><strong>入力 (未整形):</strong></label>
-            <textarea id="input-code" placeholder="ここにコードを貼り付けてください..."></textarea>
+            <textarea id="input-code" placeholder="ここに HTML または PHP コードを貼り付けてください..."></textarea>
         </div>
         <div class="editor-box">
             <label><strong>出力 (整形済み):</strong></label>
@@ -131,54 +188,72 @@
         </div>
     </div>
 
-    <script type="module">
-        import prettier from 'https://unpkg.com/prettier@3.2.5/standalone.mjs';
-        import parserHtml from 'https://unpkg.com/prettier@3.2.5/plugins/html.mjs';
-        import pluginPhp from 'https://unpkg.com/@prettier/plugin-php@0.22.2/standalone.mjs';
-
-        // HTMLのonclickから呼び出せるようにwindowオブジェクトに登録
-        window.formatCode = async function() {
+    <script>
+        async function formatCode() {
             const inputCode = document.getElementById('input-code').value;
             const language = document.getElementById('language-select').value;
             const outputArea = document.getElementById('output-code');
             const errorArea = document.getElementById('error-output');
+            const formatBtn = document.getElementById('format-btn');
             
+            errorArea.style.display = 'none';
             errorArea.textContent = '';
             outputArea.textContent = '';
             outputArea.removeAttribute('data-highlighted');
 
             if (!inputCode.trim()) return;
 
+            // Prettier読み込みチェック
+            if (typeof prettier === 'undefined' || typeof prettierPlugins === 'undefined') {
+                errorArea.style.display = 'block';
+                errorArea.textContent = "エラー: フォーマッターライブラリの読み込みに失敗しました。インターネット接続を確認して再読み込みしてください。";
+                return;
+            }
+
             try {
+                formatBtn.disabled = true;
+                formatBtn.textContent = '整形中...';
+
                 let formattedCode = '';
 
                 if (language === 'html') {
                     formattedCode = await prettier.format(inputCode, {
                         parser: "html",
-                        plugins: [parserHtml]
+                        plugins: [prettierPlugins.html]
                     });
                 } else if (language === 'php') {
+                    // PHP整形（HTML混在対応のため html プラグインも併せて登録）
                     formattedCode = await prettier.format(inputCode, {
                         parser: "php",
-                        plugins: [pluginPhp]
+                        plugins: [prettierPlugins.php, prettierPlugins.html],
+                        phpVersion: "8.2"
                     });
                 }
 
                 outputArea.textContent = formattedCode;
                 outputArea.className = 'language-' + language;
 
-                hljs.highlightElement(outputArea);
+                if (typeof hljs !== 'undefined') {
+                    hljs.highlightElement(outputArea);
+                }
 
             } catch (error) {
+                errorArea.style.display = 'block';
                 errorArea.textContent = "整形エラー:\n" + error.message;
+            } finally {
+                formatBtn.disabled = false;
+                formatBtn.textContent = 'コードを整形する';
             }
-        };
+        }
 
-        window.copyToClipboard = function() {
+        function copyToClipboard() {
             const outputCode = document.getElementById('output-code').textContent;
             const copyBtn = document.getElementById('copy-btn');
 
-            if (!outputCode) return;
+            if (!outputCode.trim()) {
+                alert('コピーする整形済みコードがありません。');
+                return;
+            }
 
             navigator.clipboard.writeText(outputCode).then(() => {
                 const originalText = copyBtn.textContent;
@@ -192,7 +267,7 @@
             }).catch(err => {
                 alert('コピーに失敗しました: ' + err);
             });
-        };
+        }
     </script>
 </body>
 </html>
