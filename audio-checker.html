@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ステレオ音声チェッカー (片チャンネル無音・片肺検知)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+    body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+    .waveform-canvas { width: 100%; height: 80px; display: block; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 p-4 md:p-8">
+
+  <div class="max-w-5xl mx-auto space-y-6">
+
+    <!-- ヘッダー -->
+    <header class="text-center space-y-2">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">
+        <span>Audio QC Tool</span>
+      </div>
+      <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+        ステレオ音声チェッカー
+      </h1>
+      <p class="text-slate-500 text-sm max-w-xl mx-auto">
+        MP4などの動画ファイルから「片チャンネル無音（片肺）」の編集ミスを自動検出します。<br class="hidden sm:inline">
+        ファイルはサーバーに送信されず、すべてブラウザ内で高速に解析されます。
+      </p>
+    </header>
+
+    <!-- ファイルドロップエリア -->
+    <div id="dropZone" class="border-2 border-dashed border-slate-300 hover:border-indigo-500 bg-white hover:bg-indigo-50/40 rounded-2xl p-8 text-center cursor-pointer transition-all shadow-sm">
+      <input type="file" id="fileInput" accept="video/mp4,video/quicktime,video/webm,audio/*,.mp4,.mov,.m4v,.m4a,.wav" class="hidden">
+      <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        </svg>
+      </div>
+      <p class="text-base font-bold text-slate-800 mb-1">MP4 / 動画ファイルをここにドラッグ＆ドロップ</p>
+      <p class="text-xs text-slate-400">またはクリックしてファイルを選択 (MP4, MOV, WebM, M4A, WAV 等)</p>
+      <p id="selectedFileName" class="text-xs font-semibold text-indigo-600 mt-2 hidden"></p>
+    </div>
+
+    <!-- 解析中プログレス表示 -->
+    <div id="loadingBox" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center space-y-3">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
+      <p id="loadingStatus" class="text-sm font-semibold text-slate-700">音声をデコード中...</p>
+      <div class="w-full bg-slate-100 rounded-full h-2 max-w-md mx-auto overflow-hidden">
+        <div id="progressBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-200" style="width: 15%"></div>
+      </div>
+    </div>
+
+    <!-- エラー表示 -->
+    <div id="errorBox" class="hidden bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl text-sm font-medium"></div>
+
+    <!-- 解析結果エリア -->
+    <div id="resultArea" class="hidden space-y-6">
+
+      <!-- 判定ステータスカード -->
+      <div id="verdictCard" class="p-5 md:p-6 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+        <div class="flex items-center gap-4">
+          <div id="verdictIcon" class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl font-bold"></div>
+          <div>
+            <h2 id="verdictTitle" class="text-lg md:text-xl font-bold"></h2>
+            <p id="verdictDesc" class="text-xs md:text-sm text-slate-600 mt-0.5"></p>
+          </div>
+        </div>
+        <div id="audioSpecBadge" class="flex flex-wrap gap-2 text-xs font-semibold"></div>
+      </div>
+
+      <!-- メイングリッド: プレイヤー + 波形 -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- 左側: 動画プレビュー & 試聴コントロール (1カラム) -->
+        <div class="lg:col-span-1 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="text-sm font-bold text-slate-700">プレビュー再生</h3>
+          <div class="bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center">
+            <video id="previewVideo" class="w-full h-full object-contain" playsinline></video>
+          </div>
+
+          <!-- 再生コントロール -->
+          <div class="flex items-center justify-between gap-2">
+            <button id="playBtn" class="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <span id="playIcon">▶</span>
+              <span id="playText">再生</span>
+            </button>
+            <span id="timeDisplay" class="text-xs font-mono text-slate-500 font-semibold px-2">00:00 / 00:00</span>
+          </div>
+
+          <!-- 音声チャンネル聴き分け (Solo L / Solo R) -->
+          <div class="space-y-1.5 pt-2 border-t border-slate-100">
+            <label class="text-xs font-bold text-slate-600">試聴チャンネル (片耳確認用):</label>
+            <div class="grid grid-cols-3 gap-1.5 text-xs font-semibold">
+              <button data-listen-mode="stereo" class="listen-mode-btn py-1.5 px-2 rounded-lg border border-indigo-600 bg-indigo-50 text-indigo-700 font-bold">通常ステレオ</button>
+              <button data-listen-mode="left" class="listen-mode-btn py-1.5 px-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600">Lのみ (両耳)</button>
+              <button data-listen-mode="right" class="listen-mode-btn py-1.5 px-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600">Rのみ (両耳)</button>
+            </div>
+          </div>
+
+          <!-- チャンネル統計 -->
+          <div class="space-y-2 pt-2 border-t border-slate-100 text-xs">
+            <div class="flex justify-between text-slate-600">
+              <span>L ピーク音量:</span>
+              <span id="statPeakL" class="font-mono font-bold">- dB</span>
+            </div>
+            <div class="flex justify-between text-slate-600">
+              <span>R ピーク音量:</span>
+              <span id="statPeakR" class="font-mono font-bold">- dB</span>
+            </div>
+            <div class="flex justify-between text-slate-600">
+              <span>L 平均音量 (RMS):</span>
+              <span id="statRmsL" class="font-mono font-bold">- dB</span>
+            </div>
+            <div class="flex justify-between text-slate-600">
+              <span>R 平均音量 (RMS):</span>
+              <span id="statRmsR" class="font-mono font-bold">- dB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右側: タイムライン波形 & 検出リスト (2カラム) -->
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- タイムライン波形グラフ -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-slate-700">左右チャンネル音量推移 (タイムライン)</h3>
+              <span class="text-xs text-slate-400">※ クリックでその位置をシーク</span>
+            </div>
+
+            <!-- L/R ラベル & 波形 Canvas -->
+            <div class="relative bg-slate-900 rounded-xl overflow-hidden p-2 select-none">
+              <!-- シークバー針 -->
+              <div id="seekCursor" class="absolute top-0 bottom-0 w-0.5 bg-yellow-400 pointer-events-none z-10 hidden"></div>
+
+              <div class="space-y-2">
+                <div>
+                  <div class="flex justify-between text-[10px] font-mono font-bold text-slate-400 px-1 mb-0.5">
+                    <span class="text-emerald-400">CH 1 (Left)</span>
+                    <span id="hoverInfoL"></span>
+                  </div>
+                  <canvas id="canvasL" class="waveform-canvas cursor-pointer bg-slate-950 rounded"></canvas>
+                </div>
+                <div>
+                  <div class="flex justify-between text-[10px] font-mono font-bold text-slate-400 px-1 mb-0.5">
+                    <span class="text-sky-400">CH 2 (Right)</span>
+                    <span id="hoverInfoR"></span>
+                  </div>
+                  <canvas id="canvasR" class="waveform-canvas cursor-pointer bg-slate-950 rounded"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- 凡例 -->
+            <div class="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 bg-emerald-500 rounded-sm"></span>L音声</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 bg-sky-500 rounded-sm"></span>R音声</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 bg-rose-500 rounded-sm"></span>片チャンネル無音（異常）</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 bg-slate-700 rounded-sm"></span>両方無音</span>
+            </div>
+          </div>
+
+          <!-- 検出された異常箇所リスト -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-700">検出された無音・異常区間一覧</h3>
+            <div id="issueList" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- 判定設定（アコーディオン） -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 text-xs space-y-3">
+        <details>
+          <summary class="font-bold text-slate-700 cursor-pointer hover:text-indigo-600 transition">
+            ⚙️ 判定しきい値・検出条件の設定 (クリックで開く)
+          </summary>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-100">
+            <div>
+              <label class="block font-semibold text-slate-600 mb-1">無音判定しきい値 (ノイズフロア):</label>
+              <div class="flex items-center gap-2">
+                <input type="range" id="thresholdRange" min="-70" max="-30" value="-50" step="1" class="flex-1 accent-indigo-600">
+                <span id="thresholdValue" class="font-mono font-bold w-16 text-right">-50 dB</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">この音量未満の区間を「無音」として扱います（一般的なマイク暗騒音は -50〜-60dB 程度）。</p>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-600 mb-1">警告対象とする最小継続時間:</label>
+              <div class="flex items-center gap-2">
+                <input type="range" id="minDurationRange" min="0.5" max="5.0" value="1.0" step="0.5" class="flex-1 accent-indigo-600">
+                <span id="minDurationValue" class="font-mono font-bold w-16 text-right">1.0 秒</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">この秒数以上、片方だけが無音状態が続いた場合に警告リストに登録します。</p>
+            </div>
+          </div>
+          <div class="text-right mt-3">
+            <button id="reanalyzeBtn" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-semibold text-xs transition">
+              設定を反映して再判定
+            </button>
+          </div>
+        </details>
+      </div>
+
+    </div>
+
+    <!-- フッター -->
+    <footer class="text-center pt-4 text-xs text-slate-400">
+      <a href="./" class="hover:underline">トップページに戻る</a>
+    </footer>
+
+  </div>
+
+  <script>
+    // --- 状態管理 ---
+    let currentAudioBuffer = null;
+    let currentAnalysis = null;
+    let audioCtx = null;
+    let mediaSource = null;
+    let channelSplitter = null;
+    let channelMerger = null;
+    let currentListenMode = 'stereo';
+    let duration = 0;
+
+    const el = (id) => document.getElementById(id);
+
+    // --- ドラッグ＆ドロップとファイル選択 ---
+    const dropZone = el('dropZone');
+    const fileInput = el('fileInput');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-indigo-500', 'bg-indigo-50/60');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/60');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/60');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    // --- 設定値の変更反映 ---
+    el('thresholdRange').addEventListener('input', (e) => {
+      el('thresholdValue').textContent = `${e.target.value} dB`;
+    });
+    el('minDurationRange').addEventListener('input', (e) => {
+      el('minDurationValue').textContent = `${parseFloat(e.target.value).toFixed(1)} 秒`;
+    });
+    el('reanalyzeBtn').addEventListener('click', () => {
+      if (currentAudioBuffer) {
+        runAnalysis();
+      }
+    });
+
+    // --- ファイルの読み込みと解析開始 ---
+    async function handleFile(file) {
+      el('errorBox').classList.add('hidden');
+      el('resultArea').classList.add('hidden');
+      el('loadingBox').classList.remove('hidden');
+      el('selectedFileName').textContent = `選択中: ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
+      el('selectedFileName').classList.remove('hidden');
+
+      // 動画プレビューのセット
+      const videoUrl = URL.createObjectURL(file);
+      const video = el('previewVideo');
+      video.src = videoUrl;
+
+      setupAudioContextForVideo(video);
+
+      try {
+        updateProgress(20, 'ファイルを読み込み中...');
+        const arrayBuffer = await file.arrayBuffer();
+
+        updateProgress(50, '音声をデコード中（PCM展開）...');
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        currentAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        duration = currentAudioBuffer.duration;
+
+        updateProgress(80, 'チャンネル別音量を解析中...');
+        await runAnalysis();
+
+        updateProgress(100, '完了！');
+        setTimeout(() => {
+          el('loadingBox').classList.add('hidden');
+          el('resultArea').classList.remove('hidden');
+        }, 300);
+
+      } catch (err) {
+        console.error(err);
+        el('loadingBox').classList.add('hidden');
+        el('errorBox').textContent = `エラー: 音声データの解析に失敗しました。対応していないコーデックか、音声トラックが含まれていません (${err.message})`;
+        el('errorBox').classList.remove('hidden');
+      }
+    }
+
+    function updateProgress(percent, msg) {
+      el('progressBar').style.width = `${percent}%`;
+      el('loadingStatus').textContent = msg;
+    }
+
+    // --- 解析処理 ---
+    async function runAnalysis() {
+      const buffer = currentAudioBuffer;
+      const numChannels = buffer.numberOfChannels;
+      const sampleRate = buffer.sampleRate;
+      const totalSamples = buffer.length;
+
+      const thresholdDb = parseFloat(el('thresholdRange').value);
+      const minDurationSec = parseFloat(el('minDurationRange').value);
+
+      // モノラルチェック
+      if (numChannels < 2) {
+        showMonoralResult(buffer);
+        return;
+      }
+
+      const left = buffer.getChannelData(0);
+      const right = buffer.getChannelData(1);
+
+      // 解像度: 約0.05秒 (50ms) ごとの窓でRMSを計算
+      const windowSize = Math.floor(sampleRate * 0.05);
+      const numWindows = Math.floor(totalSamples / windowSize);
+
+      const times = new Float32Array(numWindows);
+      const rmsL = new Float32Array(numWindows);
+      const rmsR = new Float32Array(numWindows);
+
+      let peakL = 0;
+      let peakR = 0;
+      let sumSqTotalL = 0;
+      let sumSqTotalR = 0;
+
+      for (let w = 0; w < numWindows; w++) {
+        const start = w * windowSize;
+        const end = start + windowSize;
+        let sumSqL = 0;
+        let sumSqR = 0;
+
+        for (let i = start; i < end; i++) {
+          const sl = left[i];
+          const sr = right[i];
+          const absL = Math.abs(sl);
+          const absR = Math.abs(sr);
+
+          if (absL > peakL) peakL = absL;
+          if (absR > peakR) peakR = absR;
+
+          sumSqL += sl * sl;
+          sumSqR += sr * sr;
+        }
+
+        sumSqTotalL += sumSqL;
+        sumSqTotalR += sumSqR;
+
+        times[w] = (start + windowSize / 2) / sampleRate;
+        const wRmsL = Math.sqrt(sumSqL / windowSize);
+        const wRmsR = Math.sqrt(sumSqR / windowSize);
+
+        rmsL[w] = wRmsL > 0.000001 ? 20 * Math.log10(wRmsL) : -100;
+        rmsR[w] = wRmsR > 0.000001 ? 20 * Math.log10(wRmsR) : -100;
+      }
+
+      const totalRmsL = 20 * Math.log10(Math.sqrt(sumSqTotalL / totalSamples));
+      const totalRmsR = 20 * Math.log10(Math.sqrt(sumSqTotalR / totalSamples));
+      const peakDbL = 20 * Math.log10(Math.max(peakL, 0.000001));
+      const peakDbR = 20 * Math.log10(Math.max(peakR, 0.000001));
+
+      // 統計表示の更新
+      el('statPeakL').textContent = `${peakDbL.toFixed(1)} dBFS`;
+      el('statPeakR').textContent = `${peakDbR.toFixed(1)} dBFS`;
+      el('statRmsL').textContent = `${totalRmsL.toFixed(1)} dBFS`;
+      el('statRmsR').textContent = `${totalRmsR.toFixed(1)} dBFS`;
+
+      // 片チャンネル無音区間の検出
+      const issues = [];
+      let currentIssue = null;
+
+      for (let w = 0; w < numWindows; w++) {
+        const isSilentL = rmsL[w] < thresholdDb;
+        const isSilentR = rmsR[w] < thresholdDb;
+        const time = times[w];
+
+        // 片方だけ無音（片肺）
+        let issueType = null;
+        if (isSilentL && !isSilentR) issueType = 'L_SILENT';
+        else if (!isSilentL && isSilentR) issueType = 'R_SILENT';
+
+        if (issueType) {
+          if (!currentIssue || currentIssue.type !== issueType) {
+            if (currentIssue) issues.push(currentIssue);
+            currentIssue = { type: issueType, start: time, end: time };
+          } else {
+            currentIssue.end = time;
+          }
+        } else {
+          if (currentIssue) {
+            issues.push(currentIssue);
+            currentIssue = null;
+          }
+        }
+      }
+      if (currentIssue) issues.push(currentIssue);
+
+      // minDurationSec 以上のものだけを警告対象として抽出
+      const significantIssues = issues.filter(iss => (iss.end - iss.start) >= minDurationSec);
+
+      // 全編チェック
+      const isCompletelySilentL = peakDbL < thresholdDb;
+      const isCompletelySilentR = peakDbR < thresholdDb;
+
+      currentAnalysis = {
+        numWindows,
+        times,
+        rmsL,
+        rmsR,
+        thresholdDb,
+        significantIssues,
+        isCompletelySilentL,
+        isCompletelySilentR,
+        peakDbL,
+        peakDbR,
+        duration: buffer.duration,
+        sampleRate,
+        channels: numChannels
+      };
+
+      renderVerdict(currentAnalysis);
+      renderWaveforms(currentAnalysis);
+      renderIssueList(currentAnalysis);
+    }
+
+    // --- 総合判定の描画 ---
+    function renderVerdict(res) {
+      const card = el('verdictCard');
+      const icon = el('verdictIcon');
+      const title = el('verdictTitle');
+      const desc = el('verdictDesc');
+      const badge = el('audioSpecBadge');
+
+      badge.innerHTML = `
+        <span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md">2ch ステレオ</span>
+        <span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md">${(res.sampleRate / 1000).toFixed(1)} kHz</span>
+        <span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md">${formatTime(res.duration)}</span>
+      `;
+
+      card.className = "p-5 md:p-6 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm ";
+
+      if (res.isCompletelySilentR && !res.isCompletelySilentL) {
+        card.classList.add('bg-rose-50', 'border-rose-200', 'text-rose-900');
+        icon.className = 'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-white bg-rose-600 text-2xl font-bold';
+        icon.textContent = '✕';
+        title.textContent = '【重大警告】右チャンネル (R) が全編無音です';
+        desc.textContent = 'ステレオ音声として書き出されていますが、全編を通して右チャンネルに音声がありません（完全な片肺状態）。';
+      } else if (res.isCompletelySilentL && !res.isCompletelySilentR) {
+        card.classList.add('bg-rose-50', 'border-rose-200', 'text-rose-900');
+        icon.className = 'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-white bg-rose-600 text-2xl font-bold';
+        icon.textContent = '✕';
+        title.textContent = '【重大警告】左チャンネル (L) が全編無音です';
+        desc.textContent = '全編を通して左チャンネルに音声がありません。編集時のチャンネルマッピングミスが疑われます。';
+      } else if (res.isCompletelySilentL && res.isCompletelySilentR) {
+        card.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-900');
+        icon.className = 'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-white bg-amber-600 text-2xl font-bold';
+        icon.textContent = '⚠️';
+        title.textContent = '【注意】左右どちらも全編無音です';
+        desc.textContent = '動画に有効な音量レベルが検出されませんでした。';
+      } else if (res.significantIssues.length > 0) {
+        card.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-900');
+        icon.className = 'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-white bg-amber-600 text-2xl font-bold';
+        icon.textContent = '⚠️';
+        const totalDuration = res.significantIssues.reduce((sum, i) => sum + (i.end - i.start), 0);
+        title.textContent = `【注意】部分的な片チャンネル無音を ${res.significantIssues.length} 箇所 検出`;
+        desc.textContent = `合計 約 ${totalDuration.toFixed(1)} 秒間、片方のチャンネルのみ無音になっている区間があります。ナレーションやインタビュー素材の配置漏れを確認してください。`;
+      } else {
+        card.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-900');
+        icon.className = 'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-white bg-emerald-600 text-2xl font-bold';
+        icon.textContent = '✓';
+        title.textContent = '【合格】左右チャンネルともに正常に出力されています';
+        desc.textContent = '片チャンネル抜け（片肺）の編集ミスは検出されませんでした。ステレオバランスは良好です。';
+      }
+    }
+
+    function showMonoralResult(buffer) {
+      el('loadingBox').classList.add('hidden');
+      el('resultArea').classList.remove('hidden');
+
+      const card = el('verdictCard');
+      card.className = "p-5 md:p-6 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm bg-blue-50 border-blue-200 text-blue-900";
+      el('verdictIcon').className = 'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-white bg-blue-600 text-xl font-bold';
+      el('verdictIcon').textContent = 'ℹ';
+      el('verdictTitle').textContent = 'この動画は 1ch モノラル音声です';
+      el('verdictDesc').textContent = 'ステレオトラック（2ch）ではないため、左右の片肺チェックはスキップされました。';
+      el('audioSpecBadge').innerHTML = `<span class="bg-blue-100 text-blue-800 px-2.5 py-1 rounded-md">1ch モノラル</span>`;
+      el('issueList').innerHTML = `<p class="text-xs text-slate-400">モノラル音声のため検出対象の異常はありません。</p>`;
+    }
+
+    // --- 波形・タイムラインの描画 ---
+    function renderWaveforms(res) {
+      drawSingleWaveform('canvasL', res.rmsL, res.rmsR, 'L', res);
+      drawSingleWaveform('canvasR', res.rmsR, res.rmsL, 'R', res);
+    }
+
+    function drawSingleWaveform(canvasId, targetRms, oppositeRms, chName, res) {
+      const canvas = el(canvasId);
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width = canvas.parentElement.clientWidth;
+      const height = canvas.height = 80;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // 背景グリッド（dBライン）
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      [-12, -24, -36, -48].forEach(db => {
+        const y = dbToY(db, height);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      });
+
+      // しきい値ライン
+      const threshY = dbToY(res.thresholdDb, height);
+      ctx.strokeStyle = '#f43f5e';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, threshY);
+      ctx.lineTo(width, threshY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const barWidth = width / res.numWindows;
+
+      for (let i = 0; i < res.numWindows; i++) {
+        const myDb = targetRms[i];
+        const opDb = oppositeRms[i];
+        const y = dbToY(myDb, height);
+        const barHeight = height - y;
+        const x = i * barWidth;
+
+        const isMySilent = myDb < res.thresholdDb;
+        const isOpSilent = opDb < res.thresholdDb;
+
+        // カラーリング判定
+        if (isMySilent && !isOpSilent) {
+          ctx.fillStyle = '#f43f5e'; // 警告赤
+        } else if (isMySilent && isOpSilent) {
+          ctx.fillStyle = '#334155'; // 暗いグレー
+        } else {
+          ctx.fillStyle = chName === 'L' ? '#10b981' : '#0284c7';
+        }
+
+        ctx.fillRect(x, y, Math.max(1, barWidth + 0.5), barHeight);
+      }
+    }
+
+    function dbToY(db, height) {
+      const minDb = -80;
+      const maxDb = 0;
+      const clamped = Math.max(minDb, Math.min(maxDb, db));
+      const norm = (clamped - minDb) / (maxDb - minDb);
+      return height * (1 - norm);
+    }
+
+    // --- 検出リストの描画 ---
+    function renderIssueList(res) {
+      const list = el('issueList');
+      list.innerHTML = '';
+
+      if (res.isCompletelySilentR) {
+        list.appendChild(createIssueItem('R_SILENT', 0, res.duration, '全編を通してRが無音'));
+      } else if (res.isCompletelySilentL) {
+        list.appendChild(createIssueItem('L_SILENT', 0, res.duration, '全編を通してLが無音'));
+      }
+
+      if (res.significantIssues.length === 0 && !res.isCompletelySilentL && !res.isCompletelySilentR) {
+        list.innerHTML = `<div class="p-3 bg-slate-50 border border-slate-100 rounded-lg text-slate-500 text-xs">設定されたしきい値を超える片チャンネル抜けはありません。良好です。</div>`;
+        return;
+      }
+
+      res.significantIssues.forEach(iss => {
+        const item = createIssueItem(iss.type, iss.start, iss.end);
+        list.appendChild(item);
+      });
+    }
+
+    function createIssueItem(type, start, end, customText) {
+      const div = document.createElement('div');
+      const isL = type === 'L_SILENT';
+      const chLabel = isL ? 'L 無音 (左抜け)' : 'R 無音 (右抜け)';
+      const dur = (end - start).toFixed(1);
+
+      div.className = "flex items-center justify-between p-2.5 bg-rose-50/70 hover:bg-rose-100/70 border border-rose-200 rounded-lg cursor-pointer transition text-xs";
+      div.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 bg-rose-600 text-white font-bold rounded text-[10px]">${chLabel}</span>
+          <span class="font-mono font-bold text-slate-800">${formatTime(start)} 〜 ${formatTime(end)}</span>
+          <span class="text-slate-500">(${customText || `${dur} 秒間`})</span>
+        </div>
+        <span class="text-rose-600 font-semibold hover:underline">▶ 再生</span>
+      `;
+
+      div.onclick = () => {
+        const video = el('previewVideo');
+        video.currentTime = Math.max(0, start - 0.5);
+        video.play();
+      };
+      return div;
+    }
+
+    // --- タイムラインクリックでシーク ---
+    ['canvasL', 'canvasR'].forEach(id => {
+      const canvas = el(id);
+      canvas.addEventListener('click', (e) => {
+        if (!duration) return;
+        const rect = canvas.getBoundingClientRect();
+        const ratio = (e.clientX - rect.left) / rect.width;
+        const targetTime = ratio * duration;
+        const video = el('previewVideo');
+        video.currentTime = targetTime;
+        video.play();
+      });
+    });
+
+    // --- 動画プレイヤー再生コントロール & シーク針同期 ---
+    const video = el('previewVideo');
+    const playBtn = el('playBtn');
+    const playIcon = el('playIcon');
+    const playText = el('playText');
+    const timeDisplay = el('timeDisplay');
+    const cursor = el('seekCursor');
+
+    playBtn.addEventListener('click', () => {
+      if (video.paused) video.play();
+      else video.pause();
+    });
+
+    video.addEventListener('play', () => {
+      playIcon.textContent = '⏸';
+      playText.textContent = '一時停止';
+    });
+    video.addEventListener('pause', () => {
+      playIcon.textContent = '▶';
+      playText.textContent = '再生';
+    });
+
+    video.addEventListener('timeupdate', () => {
+      timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration || 0)}`;
+
+      if (duration > 0) {
+        cursor.classList.remove('hidden');
+        const pct = (video.currentTime / duration) * 100;
+        cursor.style.left = `${pct}%`;
+      }
+    });
+
+    // --- Web Audio API での試聴チャンネル切り替え (Solo L / Solo R) ---
+    function setupAudioContextForVideo(videoEl) {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (!mediaSource) {
+        mediaSource = audioCtx.createMediaElementSource(videoEl);
+        channelSplitter = audioCtx.createChannelSplitter(2);
+        channelMerger = audioCtx.createChannelMerger(2);
+        
+        mediaSource.connect(channelSplitter);
+        channelMerger.connect(audioCtx.destination);
+      }
+      applyListenMode('stereo');
+    }
+
+    function applyListenMode(mode) {
+      currentListenMode = mode;
+      if (!channelSplitter || !channelMerger) return;
+
+      try {
+        channelSplitter.disconnect();
+      } catch(e) {}
+
+      if (mode === 'stereo') {
+        channelSplitter.connect(channelMerger, 0, 0);
+        channelSplitter.connect(channelMerger, 1, 1);
+      } else if (mode === 'left') {
+        channelSplitter.connect(channelMerger, 0, 0);
+        channelSplitter.connect(channelMerger, 0, 1);
+      } else if (mode === 'right') {
+        channelSplitter.connect(channelMerger, 1, 0);
+        channelSplitter.connect(channelMerger, 1, 1);
+      }
+
+      document.querySelectorAll('.listen-mode-btn').forEach(btn => {
+        if (btn.dataset.listenMode === mode) {
+          btn.className = "listen-mode-btn py-1.5 px-2 rounded-lg border border-indigo-600 bg-indigo-50 text-indigo-700 font-bold";
+        } else {
+          btn.className = "listen-mode-btn py-1.5 px-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600";
+        }
+      });
+    }
+
+    document.querySelectorAll('.listen-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        applyListenMode(btn.dataset.listenMode);
+      });
+    });
+
+    // --- ユーティリティ ---
+    function formatTime(sec) {
+      if (isNaN(sec)) return "00:00";
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      const ms = Math.floor((sec % 1) * 10);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${ms}`;
+    }
+  </script>
+</body>
+</html>
